@@ -1,0 +1,240 @@
+const bcrypt = require('bcrypt');
+const User = require('../models/User')
+const {sendHTMLEmail} =  require('../config/email')
+const getCurrentDate = require('../utils/getCurrentDate')
+const jwt = require('jsonwebtoken');
+module.exports = class Auth{
+    static generateEmailToken = async () => {
+        const arrayOfSymbols = 'qwertyuioplkjhgfdsazxcvbnm1234567890'.split('')
+
+        let randomEmailToken = [];
+
+        for(let i = 1; i<=20; i++){
+            randomEmailToken.push(arrayOfSymbols[Math.floor(Math.random() * arrayOfSymbols.length)])
+        }
+
+        randomEmailToken = randomEmailToken.join('');
+
+        const checkToken = await User.findOne({
+            emailToken: {
+                $eq: randomEmailToken
+            }
+        })
+        if(checkToken){
+            return Auth.generateEmailToken();
+        }
+        return randomEmailToken;
+
+    }
+    static login = async (req, res) => {
+        try{
+            const {email, password} = req.body;
+
+            if(!email || !password){
+                return res.status(400).json({error: 'All fields are required'})
+            }
+
+            const user = await User.findOne({
+                email: {
+                    $eq: email
+                }
+            })
+
+            if(user.emailVerifiedAt === null){
+                return res.status(400).json({error: 'Account not activated'})
+            }
+            if(!user){
+                return res.status(400).json({error: 'Invalid password or email'});
+            }
+            if(!await bcrypt.compare(password, user.password)){
+                return res.status(400).json({error: 'Invalid password or email'});
+            }
+            const token = jwt.sign(
+                {
+                    user_id: user._id,
+                    email: user.email,
+                },
+                process.env.JWT_TOKEN,
+                {
+                    expiresIn: '1h'
+                }
+            )
+            await User.updateOne({
+                _id: user._id
+            }, {
+                token: token
+            })
+            user.token = token;
+            return res.status(200).send(user);
+        }
+        catch(err){
+            res.status(500).send({error: err})
+        }
+    }
+    static register = async (req,res) => {
+        try{
+            const {email, password} = req.body;
+
+            if(!email || !password){
+                return res.status(400).send('All fields are required')
+            }
+
+            const checkEmailExist = await User.findOne({
+                email: {
+                    $eq: email
+                }
+            })
+
+            if(checkEmailExist){
+                return res.status(409).send('Email already exists')
+            }
+
+            const bcryptPassword = await bcrypt.hash(password, 12)
+            const emailToken = await Auth.generateEmailToken();
+
+            const user = await User.create({
+                email: email.toLowerCase(),
+                password: bcryptPassword,
+                emailVerifiedAt: null,
+                emailToken: emailToken,
+                accountType: 'user',
+            })
+
+            const locals = {
+                token: emailToken,
+                host: process.env.HOST,
+                port: process.env.FRONTEND_PORT
+            };
+
+            const options = {
+                from: "zabawix@gmail.com",
+                to: email,
+            }
+
+
+            sendHTMLEmail(options, locals, 'active-account');
+
+            return res.status(201).send(user);
+
+        }
+        catch(err){
+            console.log(err)
+            res.status(500).send(err)
+        }
+    }
+    static verifyEmail = async (req, res) => {
+        try{
+            const emailToken = req.params.token;
+            const userWithEmailToken = await User.findOne({
+                emailToken: {
+                    $eq: emailToken
+                }
+            })
+            if(userWithEmailToken){
+                userWithEmailToken.emailVerifiedAt = getCurrentDate;
+                userWithEmailToken.save();
+
+                const options = {
+                    from: "zabawix.kontakt@gmail.com",
+                    to: userWithEmailToken.email,
+                }
+
+
+                await sendHTMLEmail(options, '', 'register');
+                return res.status(200).send(userWithEmailToken);
+            }
+            return res.status(404).send('Invalid email token')
+        }
+        catch(err){
+            res.status(500).send({error: err})
+        }
+    }
+    static refreshToken = async (req, res) => {
+        try{
+            const currentToken = req.body.token;
+            const userWithToken = await User.findOne({
+                token: {
+                    $eq: currentToken
+                }
+            })
+            const token = jwt.sign(
+                {
+                    user_id: userWithToken._id,
+                    email: userWithToken.email,
+                },
+                process.env.JWT_TOKEN,
+                {
+                    expiresIn: '1h'
+                }
+            )
+            await User.updateOne({
+                _id: userWithToken._id
+            }, {
+                token: token
+            })
+            userWithToken.token = token;
+            return res.status(200).send(userWithToken);
+        }
+        catch(err){
+            res.status(500).send({error: err});
+        }
+    }
+    static checkLogin = async (req, res) => {
+        try{
+            const userToken = req.body.token;
+
+            const userWithToken = await User.findOne({
+                token: {
+                    $eq: userToken
+                }
+            })
+            console.log(userWithToken)
+            if(!userWithToken || userWithToken.emailVerifiedAt === null){
+                return res.status(200).send({type: 'quest'})
+            }
+            const user = {
+                email: userWithToken.email,
+                id: userWithToken.id,
+                points: userWithToken.points
+            }
+            return res.status(200).send({type: 'user', user: user})
+        }
+        catch(err){
+            res.status(500).send({error: err})
+        }
+    }
+    static changePassword = async (req, res) => {
+        try{
+            const {email, oldPassword, newPassword} = req.body;
+
+            if(!email || !oldPassword || !newPassword){
+                return res.status(400).json({error: 'All fields are required'})
+            }
+
+            const user = await User.findOne({
+                email: {
+                    $eq: email
+                }
+            })
+
+            if(!user){
+                return res.status(400).send('User not found');
+            }
+
+            if(!await bcrypt.compare(oldPassword, user.password)){
+                return res.status(400).send('Email or password is invalid');
+            }
+
+            const bcryptPassword = await bcrypt.hash(newPassword, 12)
+
+            user.password = bcryptPassword;
+            user.save();
+            return res.status(200).send(user);
+
+
+        }
+        catch(err){
+            res.status(500).send({error: err})
+        }
+    }
+}
