@@ -8,7 +8,8 @@ module.exports = {
             const newChestData = {
                 chestName: chestName,
                 pointsCost: pointsCost,
-                hittingChancesSum: 0
+                hittingChancesSum: 0,
+                quantityItems: 0
             }
             return await new Chest(newChestData).save()
         }
@@ -36,6 +37,7 @@ module.exports = {
                 return null
             }
             chest.hittingChancesSum += hittingChances;
+            chest.quantityItems++
             await chest.save();
             return chest
         }

@@ -98,6 +98,7 @@ module.exports = class Auth{
                 emailVerifiedAt: null,
                 emailToken: emailToken,
                 accountType: 'user',
+                points: 500
             })
 
             const locals = {

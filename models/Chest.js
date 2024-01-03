@@ -16,9 +16,13 @@ const chestSchema = Schema({
         normalPrice: Number,
         promotionValue: Number,
         promotionPrice: Number,
-        hittingChances: Number
+        hittingChances: Number,
     }],
     hittingChancesSum: {
+        type: Number,
+        required: true
+    },
+    quantityItems: {
         type: Number,
         required: true
     }
