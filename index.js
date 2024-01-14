@@ -12,8 +12,8 @@ require('dotenv').config()
 app.use(cors);
 app.use(bodyParser.json())
 app.use(async (req, res, next) => {
-    const ip = req.headers['x-forwarded-for'];
-    console.log(req.headers['x-forwarded-for'])
+    const ip = req.socket.remoteAddress;
+    console.log(req.socket.remoteAddress)
     if (req.method === 'GET'  && !req.path.includes('favicon.ico') && !req.path.match(/\.(js|css|png|jpg|jpeg|svg|webp)$/)) {
         await saveVisit(ip);
     }
