@@ -13,6 +13,7 @@ app.use(cors);
 app.use(bodyParser.json())
 app.use(async (req, res, next) => {
     const ip = req.ip;
+    console.log(req, req.ip)
     if (req.method === 'GET'  && !req.path.includes('favicon.ico') && !req.path.match(/\.(js|css|png|jpg|jpeg|svg|webp)$/)) {
         await saveVisit(ip);
     }

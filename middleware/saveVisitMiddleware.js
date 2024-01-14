@@ -8,9 +8,7 @@ const saveVisitMiddleware = async (ip) => {
         ip: ip,
         date: { $gt: new Date(Date.now() - 24*60*60*1000) }
     });
-    console.log(existingVisit )
     if (existingVisit === null) {
-        console.log('test2')
         const newVisit = new Visit({ ip, date: new Date() }); // Ustawia obecną datę i godzinę dla nowej wizyty
         await newVisit.save();
     }
