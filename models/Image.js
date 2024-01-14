@@ -4,7 +4,7 @@ const Schema = mongoose.Schema;
 const ImageSchema = Schema({
     offerID: {
         type: mongoose.Types.ObjectId,
-        required: true,
+        required: true
     },
     name: {
         type: String,
@@ -16,4 +16,4 @@ const ImageSchema = Schema({
     }
 })
 
-module.exports = image = mongoose.model('image', ImageSchema)
+module.exports = image = mongoose.model('Image', ImageSchema)

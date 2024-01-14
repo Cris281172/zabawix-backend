@@ -1,7 +1,7 @@
 const mongoose = require('mongoose')
 const Schema = mongoose.Schema;
 
-const basketSchema = Schema({
+const basketHistorySchema = Schema({
     userID: {
         type: String,
         required: true
@@ -18,4 +18,4 @@ const basketSchema = Schema({
     }
 })
 
-module.exports = BasketSchema = mongoose.model('Basket', basketSchema)
+module.exports = BasketHistorySchema = mongoose.model('BasketHistory', basketHistorySchema)

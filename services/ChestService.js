@@ -1,7 +1,7 @@
 const Chest = require('../models/Chest')
 const promotionValueFunc = require('../utils/promotionValueFunc')
 const randomizeChestContent = require('../utils/randomizeChestContent')
-const PromotionController = require('../controllers/promotion.controller')
+const Image = require('../models/Image')
 module.exports = {
     createChest: async (chestName, pointsCost) => {
         try{
@@ -19,11 +19,19 @@ module.exports = {
     },
     getChest: async (id) => {
         try{
-            return await Chest.findOne({
-                _id: {
-                    $eq: id
-                }
-            })
+            const chest = await Chest.findOne({ _id: id });
+
+            if (chest && chest.content && chest.content.length > 0) {
+                const contentWithImages = await Promise.all(chest.content.map(async (item) => {
+                    const image = await Image.findOne({ offerID: item.productID });
+                    const imageName = image ? image.name : null;
+                    return { ...item.toObject(), imageName };
+                }));
+
+                return { ...chest.toObject(), content: contentWithImages };
+            }
+
+            return chest;
         }
         catch(err){
             console.log(err)
@@ -47,10 +55,18 @@ module.exports = {
     },
     chestOpen: async (chest, user, res) => {
         try{
-            const chestResult = await randomizeChestContent(chest)
-            user.points = user.points - chest.pointsCost
+            let chestResult = await randomizeChestContent(chest);
+            user.points = user.points - chest.pointsCost;
             await user.save();
-            return chestResult
+
+            chestResult = chestResult.toObject();
+
+            const image = await Image.findOne({ offerID: chestResult.productID });
+            const imageName = image ? image.name : null;
+
+            chestResult.imageName = imageName;
+
+            return chestResult;
         }
         catch(err){
             console.log(err)

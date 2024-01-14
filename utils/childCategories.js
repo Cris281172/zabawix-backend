@@ -11,9 +11,6 @@ const childCategories = async (id) => {
 
     }])
 
-    console.log(categories);
-
-
 }
 
 module.exports = childCategories

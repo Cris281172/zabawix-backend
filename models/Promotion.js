@@ -9,15 +9,20 @@ const promotionSchema = Schema({
     userID: {
         type: String
     },
-    expirationDate: {
+    startAt: {
         type: Date,
-        default: () => new Date(+new Date() + 7*24*60*60*1000)
+        required: true
+    },
+    endAt: {
+        type: Date,
+        required: true
     },
     offerID: {
         type: String,
     },
-    discount: {
+    promotionPrice: {
         type: Number
     }
 })
+
 module.exports = PromotionSchema = mongoose.model('Promotion', promotionSchema)

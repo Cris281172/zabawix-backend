@@ -30,5 +30,22 @@ module.exports = {
         catch(err){
             res.status(500).json({error: err})
         }
+    },
+    getCategory: async (req, res) => {
+        try{
+            const {categoryID} = req.body;
+            const category = Category.findOne({
+                _id: {
+                    $eq: categoryID
+                }
+            })
+            if(!category){
+                return res.status(404).send('Category not found')
+            }
+            res.status(200).send(category)
+        }
+        catch(err){
+            res.status(500).json({error: err})
+        }
     }
 }

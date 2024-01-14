@@ -4,7 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node --scripts-prepend-node-path index.js"
   },
   "author": "",
   "license": "ISC",
@@ -17,6 +18,7 @@
     "email-templates": "^11.1.1",
     "express": "^4.18.2",
     "express-fileupload": "^1.4.3",
+    "https": "^1.0.0",
     "jsonwebtoken": "^9.0.2",
     "mongodb": "^6.3.0",
     "mongoose": "^8.0.3",

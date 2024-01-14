@@ -21,12 +21,18 @@ const offerSchema = Schema({
         type: Number,
         required: true
     },
-    promotionPrice: {
-        type: Number,
-    },
     createdTime: {
         type: Number,
         required: true,
+    },
+    promotionData: {
+        type: Array,
+    },
+    promotionPrice: {
+        type: Number,
+    },
+    categoryName: {
+        type: String,
     }
 })
 

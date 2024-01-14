@@ -182,14 +182,13 @@ module.exports = class Auth{
     }
     static checkLogin = async (req, res) => {
         try{
-            const userToken = req.body.token;
+            const userToken = req.headers.authorization;
 
             const userWithToken = await User.findOne({
                 token: {
                     $eq: userToken
                 }
             })
-            console.log(userWithToken)
             if(!userWithToken || userWithToken.emailVerifiedAt === null){
                 return res.status(200).send({type: 'quest'})
             }
@@ -236,6 +235,19 @@ module.exports = class Auth{
         }
         catch(err){
             res.status(500).send({error: err})
+        }
+    }
+    static logout = async (req, res) => {
+        try {
+            const userToken = req.body.token;
+            const user = await User.findOne({ token: userToken });
+
+            if (user) {
+                await User.updateOne({ _id: user._id }, { $unset: { token: "" } });
+            }
+            res.status(200).send({ message: 'Successfully logged out' });
+        } catch (err) {
+            res.status(500).send({ error: 'An error occurred during logout' });
         }
     }
 }

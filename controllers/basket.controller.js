@@ -1,9 +1,10 @@
 const BasketService = require('../services/BasketService')
 const Basket = require("../models/Basket");
+const BasketHistory = require('../models/BasketHistory')
 module.exports = {
     basketCreate: async (req, res) => {
         try{
-            const { userID } = req.body;
+            const { userID, price, basket } = req.body;
             const userBasket = await Basket.findOne({
                 userID: {
                     $eq: userID
@@ -12,8 +13,23 @@ module.exports = {
             if(userBasket){
                 return res.status(404).send("You have an active basket")
             }
-            const newBasket = await BasketService.basketCreate(userID)
+            const newBasket = await BasketService.basketCreate(userID, price, basket)
             return res.status(201).send(newBasket)
+        }
+        catch(err){
+            res.status(500).json({error: err})
+        }
+    },
+    basketReplace: async (req, res) => {
+        try{
+            const {userID} = req.body;
+            const userBasket = await Basket.findOne({
+                userID: {
+                    $eq: userID
+                }
+            })
+            const newBasketHistory = await BasketService.basketReplace(userBasket)
+            res.status(201).send(newBasketHistory)
         }
         catch(err){
             res.status(500).json({error: err})
@@ -22,6 +38,7 @@ module.exports = {
     basketAdd: async (req,res) => {
         try{
             const { userID, productID, quantity } = req.body;
+            const token = req.headers.authorization
             const userBasket = await Basket.findOne({
                 userID: {
                     $eq: userID
@@ -31,7 +48,7 @@ module.exports = {
                 return res.status(404).send('Basket not found!')
             }
 
-            const basket = await BasketService.basketAdd(userBasket, productID, quantity)
+            const basket = await BasketService.basketAdd(userBasket, productID, quantity, token)
             return res.status(201).send(basket)
 
         }

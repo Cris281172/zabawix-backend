@@ -12,13 +12,10 @@ const transportConfig = {
 }
 
 const sendMail = (options) => {
-    console.log(transportConfig)
     const transporter = nodemailer.createTransport(transportConfig);
 
     transporter.sendMail(options, (err, info) => {
         if(err) return console.log(err);
-
-        console.log(info);
     })
 }
 

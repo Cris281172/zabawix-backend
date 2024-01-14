@@ -8,6 +8,7 @@ const basketController = require('../controllers/basket.controller')
 const orderController = require('../controllers/order.controller')
 const chestController = require('../controllers/chest.controller')
 const promotionController = require('../controllers/promotion.controller')
+const statisticsController = require('../controllers/statistics.controller')
 const authMiddleware = require('../middleware/authMiddleware');
 
 router.post('/register', authController.register)
@@ -15,14 +16,16 @@ router.get('/email-verify/:token', authController.verifyEmail)
 router.post('/login', authController.login)
 router.post('/refresh-token', authController.refreshToken)
 router.post('/check-login', authController.checkLogin)
+router.post('/user-logout', authController.logout)
 // router.post('/change-password', authController.changePassword)
 
 router.post('/password-change', authMiddleware, authController.changePassword);
 // router.post('/password-restart', authMiddleware, authController.restartPassword);
 
 router.post('/basket/create', authMiddleware, basketController.basketCreate)
+router.post('/basket/replace', authMiddleware, basketController.basketReplace)
 router.post('/basket/add', authMiddleware, basketController.basketAdd)
-router.post('/basket/delete', authMiddleware, basketController.basketDelete)
+router.delete('/basket/delete', authMiddleware, basketController.basketDelete)
 router.post('/basket/modify', authMiddleware, basketController.basketModify)
 router.post('/basket/get', authMiddleware, basketController.basketGet)
 
@@ -37,7 +40,8 @@ router.post('/orders/user/get', authMiddleware,  orderController.getAllUserOrder
 
 
 router.post('/category/create', categoryController.categoryCreate)
-router.get('/categories/get', categoryController.getCategories)
+router.get('/categories/get', categoryController.getCategories);
+router.post('/category/get', categoryController.getCategory)
 
 router.post('/chest/create', chestController.createChest)
 router.get('/chests/get', chestController.getChests)
@@ -47,6 +51,11 @@ router.post('/chest/open', authMiddleware, chestController.chestOpen)
 
 
 router.post('/promotion/create', promotionController.createPromotion)
+router.get('/promotions/get', promotionController.getAllPromotion)
+router.get('/promotions/user/get', authMiddleware, promotionController.getUserPromotion)
+
+
+router.get('/statistics/get', statisticsController.getStatisticsNumber)
 
 // router.post('/categories', authMiddleware, (req, res) => {
 //     router.post('/create', categoryController.createCategory);

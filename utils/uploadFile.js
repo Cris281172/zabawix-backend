@@ -42,7 +42,7 @@ module.exports = class ImageUploadService {
 
     static async saveImage(imageData) {
         // Zapisywanie danych obrazu w bazie danych
-        console.log(imageData)
+
         await new Image(imageData).save();
     }
 };

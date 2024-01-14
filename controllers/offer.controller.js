@@ -4,6 +4,7 @@ module.exports = {
     createOffer: async (req, res) => {
         try{
             const createdOffer = await OfferService.createOffer(req.body)
+
             if(req.files){
                 for(const prop in req.files){
                     const uploadResult = await ImageUploadService.uploadImage(req.files[prop])
@@ -25,7 +26,8 @@ module.exports = {
     getOffers: async (req, res) => {
         try{
             const query = req.query;
-            const offers = await OfferService.getOffers(query)
+            const token = req.headers.authorization;
+            const offers = await OfferService.getOffers(query, token)
             res.status(200).send(offers)
         }
         catch(err){
@@ -34,7 +36,11 @@ module.exports = {
     },
     getOffer: async (req, res) => {
         try{
-            const offer = await OfferService.getOffer(req.params.id)
+            const token = req.headers.authorization;
+            const offer = await OfferService.getOffer(req.params.id, token)
+            if(offer === null){
+                return res.status(404).send('Offer not found')
+            }
             res.status(200).send(offer)
         }
         catch(err){
