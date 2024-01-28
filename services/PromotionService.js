@@ -1,4 +1,5 @@
 const Promotion = require('../models/Promotion')
+const Offer = require("../models/Offer");
 module.exports = {
     createPromotion: async (promotionName, userID, offerID, startAt, endAt, promotionPrice) => {
         try{
@@ -24,13 +25,33 @@ module.exports = {
             console.log(err)
         }
     },
-    getUserPromotion: async(userID) => {
+    getUserPromotion: async(userID, query) => {
         try{
-            return await Promotion.find({
-                userID: {
-                    $eq: userID
-                }
-            })
+            const currentDate = new Date();
+            let page = parseInt(query.page) || 0;
+            let limit = query.limit || 2;
+            let queryCondition = {
+                userID: { $eq: userID }
+            };
+
+            if (query.status === 'active') {
+                queryCondition.endAt = { $gt: currentDate };
+            }
+
+            if(query.status === 'end'){
+                queryCondition.endAt = { $lt: currentDate };
+            }
+
+            const promotion = await Promotion.find(queryCondition).skip(page * limit).limit(limit);
+            const total = await Promotion.countDocuments();
+            return {
+                promotion,
+                limit,
+                total,
+                page: page + 1,
+                pages: Math.ceil(total / limit)
+            }
+
         }
         catch(err){
 

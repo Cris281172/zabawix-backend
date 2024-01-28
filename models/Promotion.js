@@ -18,7 +18,8 @@ const promotionSchema = Schema({
         required: true
     },
     offerID: {
-        type: String,
+        type: Schema.Types.ObjectId,
+        ref: "Offer"
     },
     promotionPrice: {
         type: Number

@@ -9,6 +9,8 @@ const orderController = require('../controllers/order.controller')
 const chestController = require('../controllers/chest.controller')
 const promotionController = require('../controllers/promotion.controller')
 const statisticsController = require('../controllers/statistics.controller')
+const customerController = require('../controllers/customer.controller')
+const deliveryController = require('../controllers/delivery.controller')
 const authMiddleware = require('../middleware/authMiddleware');
 
 router.post('/register', authController.register)
@@ -52,10 +54,17 @@ router.post('/chest/open', authMiddleware, chestController.chestOpen)
 
 router.post('/promotion/create', promotionController.createPromotion)
 router.get('/promotions/get', promotionController.getAllPromotion)
-router.get('/promotions/user/get', authMiddleware, promotionController.getUserPromotion)
+router.post('/promotions/user/get', authMiddleware, promotionController.getUserPromotion)
 
 
 router.get('/statistics/get', statisticsController.getStatisticsNumber)
+
+router.post('/customer/create', authMiddleware, customerController.createCustomer)
+router.post('/customer/get', authMiddleware, customerController.getCustomer)
+router.post('/customer/modify', authMiddleware, customerController.modifyCustomer)
+
+router.post('/delivery/create', deliveryController.deliveryCreate)
+
 
 // router.post('/categories', authMiddleware, (req, res) => {
 //     router.post('/create', categoryController.createCategory);

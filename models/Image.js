@@ -1,9 +1,10 @@
 const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
 
-const ImageSchema = Schema({
+const ImageSchema = new Schema({
     offerID: {
-        type: mongoose.Types.ObjectId,
+        type: Schema.Types.ObjectId,
+        ref: 'Offer',
         required: true
     },
     name: {

@@ -6,7 +6,11 @@ const orderSchema = Schema({
         type: String,
         required: true
     },
-    userID: {
+    deliveryID: {
+        type: String,
+        required: true
+    },
+    customerID: {
         type: String,
         required: true
     }

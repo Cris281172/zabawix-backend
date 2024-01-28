@@ -3,17 +3,20 @@ const Image = require('../models/Image')
 const Promotion = require('../models/Promotion')
 const User = require('../models/User')
 const getPromotion = require('../utils/getPromotion')
-const getCategoryName = require('../utils/getCategoryName')
+const customAggregate = require('../utils/customAggregate')
+const ObjectId = require('mongoose').Types.ObjectId;
+const childCategories = require('../utils/childCategories')
 
 module.exports = {
-    createOffer: async ({title, desc, categoryID, price, createdTime, promotionID}) => {
+    createOffer: async ({title, desc, categoryID, price, createdTime, amount}) => {
         try{
             const newOffer = {
                 title: title,
                 desc: desc,
                 categoryID: categoryID,
                 price: price,
-                createdTime: createdTime
+                createdTime: createdTime,
+                amount: amount
             }
             return await new Offer(newOffer).save();
         }
@@ -24,42 +27,84 @@ module.exports = {
     getOffers: async(query, token) => {
         try{
             let filters = {};
-            let sort = {}
-            if(query.sort){
-                sort = []
-                if(query.sort === 'newest'){
-                    sort.push(['createdTime', 1])
+
+            const sortQueries = {
+                newest: {'createdTime': -1},
+                oldest: {'createdTime': 1},
+                'lowest-price': {'price': 1},
+                'highest-price': {'price': -1},
+            }
+
+            const sort = sortQueries[query.sort] ? sortQueries[query.sort] : {'createdTime': -1};
+
+            if (query.min_price || query.max_price) {
+                filters.price = {};
+                if (query.min_price) {
+                    filters.price.$gte = Number(query.min_price);
                 }
-                if(query.sort === 'oldest'){
-                    sort.push(['createdTime', -1])
-                }
-                if(query.sort === 'lowest-price'){
-                    sort.push(['price', 1])
-                }
-                if(query.sort === 'highest-price'){
-                    sort.push(['price', -1])
+                if (query.max_price) {
+                    filters.price.$lte = Number(query.max_price);
                 }
             }
-            if (query.min_price !== undefined && query.min_price !== null) {
-                filters.price = { $gt: query.min_price };
+
+            if (query.category) {
+                const childCategoryIDs = await childCategories(query.category);
+                console.log(childCategoryIDs)
+                filters.categoryID = {$in: childCategoryIDs}
             }
-            const user = await User.findOne({ token: { $eq: token } });
+
             let page = parseInt(query.page) || 0;
-            let limit = query.limit || 9;
-            let offers = await Offer.find(filters).skip(page * limit).limit(limit).sort(sort);
+            let limit = parseInt(query.limit) || 9;
+
+            const offersStages  = [
+                {$sort: sort},
+                {$skip: page * limit},
+                {$match: filters},
+                {
+                    $limit: limit
+                },
+                {
+                    $lookup: {
+                        from: 'images',
+                        localField: '_id',
+                        foreignField: 'offerID',
+                        as: 'images'
+                    }
+                },
+                {
+                    $lookup: {
+                        from: 'promotions',
+                        localField: '_id',
+                        foreignField: 'offerID',
+                        as: 'promotions'
+                    },
+                },
+                {
+                    $project: {
+                        promotionPrice: {
+                            $ifNull: [
+                                { $arrayElemAt: ["$promotions.promotionPrice", 0] },
+                                null
+                            ]
+                        },
+                        imageName: {
+                            $ifNull: [
+                                { $arrayElemAt: ["$images.name", 0] },
+                                null
+                            ]
+                        },
+                        title: 1,
+                        desc: 1,
+                        categoryID: 1,
+                        price: 1,
+                        createdTime: 1,
+                        amount: 1
+                    }
+                }
+            ]
+            const offers = await customAggregate(Offer, offersStages);
+
             let currentOfferCount = offers.length;
-
-            offers = await Promise.all(offers.map(async (offer) => {
-                const image = await Image.findOne({ offerID: offer._id });
-                const imageName = image ? image.name : null;
-
-                const promotion = await getPromotion(offer._id, user)
-                const promotionPrice = promotion ? promotion.promotionPrice : null;
-
-                const categoryName = await getCategoryName(offer.categoryID)
-
-                return { ...offer.toObject(), imageName, promotionPrice, categoryName };
-            }));
 
             const total = await Offer.countDocuments(filters);
             return {
@@ -77,22 +122,59 @@ module.exports = {
     },
     getOffer: async(id, token) => {
         try {
-            const offer = await Offer.findOne({ _id: { $eq: id } });
+            const offerStages  = [
+                {
+                    $match: { _id:  new ObjectId(id) }
+                },
+                {
+                    $lookup: {
+                        from: 'images',
+                        localField: '_id',
+                        foreignField: 'offerID',
+                        as: 'images'
+                    }
+                },
+                {
+                    $lookup: {
+                        from: 'promotions',
+                        localField: '_id',
+                        foreignField: 'offerID',
+                        as: 'promotions'
+                    },
+                },
+                {
+                    $project: {
+                        promotionData: {
+                            $ifNull: [
+                                { $arrayElemAt: ["$promotions", 0] },
+                                {}
+                            ]
+                        },
+                        imageNames: {
+                            $map: {
+                                input: "$images",
+                                as: "img",
+                                in: "$$img.name"
+                            }
+                        },
+                        title: 1,
+                        desc: 1,
+                        categoryID: 1,
+                        price: 1,
+                        createdTime: 1,
+                        amount: 1
+                    }
+                }
+            ]
+            const aggregatedOffers  = await customAggregate(Offer, offerStages);
+
+            const offer = aggregatedOffers.length > 0 ? aggregatedOffers[0] : null;
+
             if (!offer) {
                 return null;
             }
 
-            const user = await User.findOne({ token: { $eq: token } });
-
-            const promotion = await getPromotion(offer._id, user);
-
-            const images = await Image.find({ offerID: offer._id });
-            const imageNames = images.map(image => image.name);
-
-            const promotionData = promotion ? promotion : [];
-
-
-            return { ...offer.toObject(), imageNames, promotionData };
+            return { ...offer };
         }
         catch(err){
             console.log(err)

@@ -32,7 +32,6 @@ module.exports = class ImageUploadService {
             });
             blobStream.end(file.buffer);
         });
-        console.log('das')
         return {
             name: filename,
             originalName: file.originalname,

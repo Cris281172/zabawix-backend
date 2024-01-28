@@ -1,10 +1,31 @@
 const Order = require("../models/Order");
 module.exports = {
-    createOrder: async ({userID, status}) => {
+    createOrder: async ({userID, status, deliveryName, deliverySurname, deliveryAddress, deliveryCity, deliveryCode, deliveryPhone, deliveryEmail, deliveryComments}) => {
         try{
             const newOrderData = {
                 userID: userID,
-                status: status
+                status: status,
+                deliveryType: String,
+                deliveryData: {
+                    name: deliveryName,
+                    surname: deliverySurname,
+                    address: deliveryAddress,
+                    city: deliveryCity,
+                    code: deliveryCode,
+                    phone: deliveryPhone,
+                    email: deliveryEmail,
+                    comments: deliveryComments
+                },
+                personalData: {
+                    name: personalName,
+                    surname: personalSurname,
+                    address: personalAddress,
+                    city: personalCity,
+                    code: personalCode,
+                    phone: personalPhone,
+                    email: personalEmail,
+                    comments: deliveryComments
+                }
             }
             return await new Order(newOrderData).save();
         }

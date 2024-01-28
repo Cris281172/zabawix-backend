@@ -1,6 +1,5 @@
 const Category = require('../models/Category')
 const CategoryService = require('../services/CategoryService')
-const childCategories = require('../utils/childCategories')
 
 module.exports = {
     categoryCreate: async (req, res) => {
@@ -22,7 +21,6 @@ module.exports = {
         }
     },
     getCategories: async (req, res) => {
-        childCategories('65809bed4b8c46bf780947a7')
         try{
             const categories = await Category.find();
             res.status(200).send(categories);

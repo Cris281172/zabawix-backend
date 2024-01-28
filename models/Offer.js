@@ -1,7 +1,7 @@
 const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
 
-const offerSchema = Schema({
+const offerSchema = new Schema({
     title: {
         type: String,
         required: true
@@ -33,6 +33,10 @@ const offerSchema = Schema({
     },
     categoryName: {
         type: String,
+    },
+    amount: {
+        type: Number,
+        required: true
     }
 })
 

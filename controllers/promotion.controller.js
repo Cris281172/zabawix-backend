@@ -36,8 +36,9 @@ module.exports = {
     },
     getUserPromotion: async (req, res) => {
         try{
+            const query = req.query;
             const {userID} = req.body;
-            const userPromotion = await PromotionService.getUserPromotion(userID)
+            const userPromotion = await PromotionService.getUserPromotion(userID, req.query)
             res.status(200).send(userPromotion)
         }
         catch(err){

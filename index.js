@@ -8,13 +8,11 @@ const mainRoutes = require('./routes/main');
 const bodyParser = require('body-parser');
 const https = require("https");
 const cors = require('cors')({origin: true})
-app.set('trust proxy', true)
 require('dotenv').config()
 app.use(cors);
 app.use(bodyParser.json())
 app.use(async (req, res, next) => {
-    const ip = req.socket.remoteAddress;
-    console.log(req.socket.remoteAddress)
+    const ip = req.ip;
     if (req.method === 'GET'  && !req.path.includes('favicon.ico') && !req.path.match(/\.(js|css|png|jpg|jpeg|svg|webp)$/)) {
         await saveVisit(ip);
     }
