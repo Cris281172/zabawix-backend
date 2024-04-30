@@ -9,7 +9,7 @@ const bodyParser = require('body-parser');
 const https = require("https");
 const cors = require('cors')({origin: 'https://zabawix.com/'})
 require('dotenv').config()
-app.use(cors);
+app.use(cors());
 app.use(bodyParser.json())
 app.use('/', mainRoutes)
 
