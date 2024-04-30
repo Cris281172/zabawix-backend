@@ -3,15 +3,15 @@ const Schema = mongoose.Schema;
 
 const basketSchema = Schema({
     userID: {
-        type: String,
-        required: true
+        type: Schema.Types.Mixed,
+        ref: 'User',
     },
     basket: [{
-        productID: String,
+        productID: {
+            type: Schema.Types.ObjectId,
+            ref: 'Product',
+        },
         quantity: Number,
-        productPrice: Number,
-        productTitle: String,
-        promotionPrice: Number
     }],
     price: {
         type: Number,

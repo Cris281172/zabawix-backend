@@ -3,41 +3,32 @@ const Basket = require("../models/Basket");
 const BasketHistory = require('../models/BasketHistory')
 module.exports = {
     basketCreate: async (req, res) => {
-        try{
-            const { userID, price, basket } = req.body;
-            const userBasket = await Basket.findOne({
-                userID: {
-                    $eq: userID
-                }
-            })
+        try {
+
+            const userID = req.body.userID ? req.body.userID : (req.headers.sessionID);
+            const { price, basket } = req.body;
+            const userBasket = await Basket.findOne({ userID });
+            // if (userBasket && basket.length !== 0) {
+            //     await BasketService.basketReplace(userBasket);
+            // }
+            console.log(userBasket)
             if(userBasket){
-                return res.status(404).send("You have an active basket")
+                return res.status(409).send('Basket already exists')
             }
-            const newBasket = await BasketService.basketCreate(userID, price, basket)
-            return res.status(201).send(newBasket)
-        }
-        catch(err){
-            res.status(500).json({error: err})
-        }
-    },
-    basketReplace: async (req, res) => {
-        try{
-            const {userID} = req.body;
-            const userBasket = await Basket.findOne({
-                userID: {
-                    $eq: userID
-                }
-            })
-            const newBasketHistory = await BasketService.basketReplace(userBasket)
-            res.status(201).send(newBasketHistory)
-        }
-        catch(err){
-            res.status(500).json({error: err})
+
+            const newBasket = await BasketService.basketCreate(userID, price, basket);
+            if (!req.user) {
+                res.cookie('sessionID', userID, { httpOnly: true, maxAge: 86400000 });
+            }
+            return res.status(201).send(newBasket);
+        } catch (err) {
+            res.status(500).json({ error: err.message });
         }
     },
     basketAdd: async (req,res) => {
         try{
-            const { userID, productID, quantity } = req.body;
+            const { productID, quantity } = req.body;
+            const userID = req.body.userID ? req.body.userID : (req.headers.sessionID)
             const token = req.headers.authorization
             const userBasket = await Basket.findOne({
                 userID: {
@@ -78,7 +69,7 @@ module.exports = {
         try{
             const { basketID, quantity, productID } = req.body;
             const basket = await Basket.findOne({
-                _id: {
+                userID: {
                     $eq: basketID
                 }
             })
@@ -94,7 +85,7 @@ module.exports = {
     },
     basketGet: async(req, res) => {
         try{
-            const {userID} = req.body;
+            const userID = req.body.userID ? req.body.userID : req.headers.sessionID;
             const basket = await Basket.findOne({
                 userID: {
                     $eq: userID
@@ -103,7 +94,8 @@ module.exports = {
             if(!basket){
                 return res.status(404).send('Basket not found')
             }
-            res.status(200).send(basket)
+            const basketData = await  BasketService.getBasket(userID, basket)
+            res.status(200).send(basketData)
         }
         catch(err){
             res.status(500).json({error: err})

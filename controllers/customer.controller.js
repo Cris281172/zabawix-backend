@@ -10,7 +10,7 @@ module.exports = {
                 }
             })
             if(customerExist){
-                return res.status(404).send('Customer already exist');
+                return res.status(400).send('Customer already exist');
             }
             const customer = await CustomerService.createCustomer(customerData)
             return res.status(201).send(customer)
@@ -28,7 +28,7 @@ module.exports = {
                 }
             })
             if(!getCustomer){
-                return res.status(404).send('Customer not found!')
+                return res.status(400).send('Customer not found!')
             }
             res.status(200).send(getCustomer)
         }

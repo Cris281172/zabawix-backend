@@ -1,7 +1,13 @@
+const checkDateValid = require('../utils/checkDateValid')
 const updateBasketPrice = (userBasket) => {
     let sum = 0
     userBasket.basket.forEach(el => {
-        sum += el.quantity * (el.promotionPrice ? el.promotionPrice : el.productPrice)
+        // if(checkDateValid(el.promotionData.endAt)){
+            sum += el.quantity * (el.promotionData ? el.promotionData.promotionPrice : el.productPrice)
+        // }
+        // else{
+        //     sum += el.quantity * el.productPrice
+        // }
     })
     return sum
 }

@@ -6,6 +6,8 @@ const getPromotion = require('../utils/getPromotion')
 const customAggregate = require('../utils/customAggregate')
 const ObjectId = require('mongoose').Types.ObjectId;
 const childCategories = require('../utils/childCategories')
+const Observe = require('../models/Observe')
+
 
 module.exports = {
     createOffer: async ({title, desc, categoryID, price, createdTime, amount}) => {
@@ -24,7 +26,7 @@ module.exports = {
             console.log(err);
         }
     },
-    getOffers: async(query, token) => {
+    getOffers: async(query, user) => {
         try{
             let filters = {};
 
@@ -49,64 +51,94 @@ module.exports = {
 
             if (query.category) {
                 const childCategoryIDs = await childCategories(query.category);
-                console.log(childCategoryIDs)
+
                 filters.categoryID = {$in: childCategoryIDs}
             }
 
-            let page = parseInt(query.page) || 0;
-            let limit = parseInt(query.limit) || 9;
+            if (query.text) {
+                filters.$or = [
+                    { title: { $regex: new RegExp(query.text, 'i') } },
+                    { desc: { $regex: new RegExp(query.text, 'i') } }
+                ];
+            }
 
-            const offersStages  = [
-                {$sort: sort},
-                {$skip: page * limit},
-                {$match: filters},
-                {
-                    $limit: limit
-                },
-                {
-                    $lookup: {
-                        from: 'images',
-                        localField: '_id',
-                        foreignField: 'offerID',
-                        as: 'images'
-                    }
-                },
-                {
-                    $lookup: {
+            let page = parseInt(query.page) || 0;
+            let limit = parseInt(query.limit) || 12;
+            let offers
+            offers = await customAggregate(Offer, {
+                sort,
+                skip: page * limit,
+                match: filters,
+                limit: limit,
+                lookups: [
+                    {from: 'images', localField: '_id', foreignField: 'offerID', as: 'images'},
+                    {
                         from: 'promotions',
-                        localField: '_id',
-                        foreignField: 'offerID',
+                        let: { productID: '$_id', userID: user ? new ObjectId(user.id) : null },
+                        pipeline: [
+                            {
+                                $match: {
+                                    $expr: {
+                                        $and: [
+                                            { $eq: ['$offerID', '$$productID'] },
+                                            {
+                                                $or: [
+                                                    { $eq: ['$userID', '$$userID'] },
+                                                    { $eq: ['$userID', null] }
+                                                ]
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        ],
                         as: 'promotions'
                     },
-                },
-                {
-                    $project: {
-                        promotionPrice: {
-                            $ifNull: [
-                                { $arrayElemAt: ["$promotions.promotionPrice", 0] },
-                                null
-                            ]
-                        },
-                        imageName: {
-                            $ifNull: [
-                                { $arrayElemAt: ["$images.name", 0] },
-                                null
-                            ]
-                        },
-                        title: 1,
-                        desc: 1,
-                        categoryID: 1,
-                        price: 1,
-                        createdTime: 1,
-                        amount: 1
-                    }
+                    {from: 'observes', localField: '_id', foreignField: 'productID', as: 'observe'},
+                    {from: 'categories', localField: 'categoryID', foreignField: '_id', as: 'category'}
+                ],
+                project: {
+                    customFields:{
+                        promotionData: {$ifNull: [{ $arrayElemAt: ["$promotions", 0] }, {}]},
+                        imageName: {$ifNull: [{ $arrayElemAt: ["$images.name", 0] }, null]},
+                        categoryName: {$ifNull: [{ $arrayElemAt: ["$category.categoryName", 0] }, null]},
+                        observed: {
+                            $cond: {
+                                if: {
+                                    $gt: [
+                                        {
+                                            $size: {
+                                                $filter: {
+                                                    input: "$observe",
+                                                    as: "item",
+                                                    cond: { $eq: ["$$item.userID", user ? new ObjectId(user.id) : null] }
+                                                }
+                                            }
+                                        },
+                                        0
+                                    ]
+                                },
+                                then: true,
+                                else: false
+                            }
+                        }
+                    },
+                    fields: ['title', 'categoryID', 'price', 'createdTime', 'amount']
                 }
-            ]
-            const offers = await customAggregate(Offer, offersStages);
+            });
+
+            let total
+
+            if(query.observe){
+                offers = offers.filter(el => el.observed === true);
+                total = await Observe.countDocuments({userID: user._id})
+            }
+            else if(!query.observe){
+                total = await Offer.countDocuments(filters);
+            }
 
             let currentOfferCount = offers.length;
 
-            const total = await Offer.countDocuments(filters);
             return {
                 offers,
                 limit,
@@ -120,53 +152,64 @@ module.exports = {
             console.log(err)
         }
     },
-    getOffer: async(id, token) => {
+    getOffer: async(id, user) => {
         try {
-            const offerStages  = [
-                {
-                    $match: { _id:  new ObjectId(id) }
-                },
-                {
-                    $lookup: {
-                        from: 'images',
-                        localField: '_id',
-                        foreignField: 'offerID',
-                        as: 'images'
-                    }
-                },
-                {
-                    $lookup: {
+            const aggregatedOffers = await customAggregate(Offer, {
+                match: {_id:  new ObjectId(id)},
+                lookups: [
+                    {from: 'images', localField: '_id', foreignField: 'offerID', as: 'images'},
+                    {from: 'observes', localField: '_id', foreignField: 'productID', as: 'observe'},
+                    {
                         from: 'promotions',
-                        localField: '_id',
-                        foreignField: 'offerID',
-                        as: 'promotions'
-                    },
-                },
-                {
-                    $project: {
-                        promotionData: {
-                            $ifNull: [
-                                { $arrayElemAt: ["$promotions", 0] },
-                                {}
-                            ]
-                        },
-                        imageNames: {
-                            $map: {
-                                input: "$images",
-                                as: "img",
-                                in: "$$img.name"
+                        let: { productID: '$_id', userID: user ? new ObjectId(user.id) : null },
+                        pipeline: [
+                            {
+                                $match: {
+                                    $expr: {
+                                        $and: [
+                                            { $eq: ['$offerID', '$$productID'] },
+                                            {
+                                                $or: [
+                                                    { $eq: ['$userID', '$$userID'] },
+                                                    { $eq: ['$userID', null] }
+                                                ]
+                                            }
+                                        ]
+                                    }
+                                }
                             }
-                        },
-                        title: 1,
-                        desc: 1,
-                        categoryID: 1,
-                        price: 1,
-                        createdTime: 1,
-                        amount: 1
+                        ],
+                        as: 'promotions'
                     }
+                ],
+                project: {
+                    customFields:{
+                        promotionData: {$ifNull: [{ $arrayElemAt: ["$promotions", 0] }, {}]},
+                        imageNames: {$map: {input: "$images", as: "img", in: "$$img.name"}},
+                        observed: {
+                            $cond: {
+                                if: {
+                                    $gt: [
+                                        {
+                                            $size: {
+                                                $filter: {
+                                                    input: "$observe",
+                                                    as: "item",
+                                                    cond: { $eq: ["$$item.userID", user ? user.id : null] }
+                                                }
+                                            }
+                                        },
+                                        0
+                                    ]
+                                },
+                                then: true,
+                                else: false
+                            }
+                        }
+                    },
+                    fields: ['title', 'desc', 'categoryID', 'price', 'createdTime', 'amount']
                 }
-            ]
-            const aggregatedOffers  = await customAggregate(Offer, offerStages);
+            });
 
             const offer = aggregatedOffers.length > 0 ? aggregatedOffers[0] : null;
 

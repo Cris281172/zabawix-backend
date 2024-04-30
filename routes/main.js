@@ -1,6 +1,8 @@
 const router = require('express').Router();
 const multer = require('multer');
-const upload = multer();
+const upload = multer({
+    limits: { fieldSize: 25 * 1024 * 1024 }
+})
 const authController = require('../controllers/auth.controller')
 const offersController = require('../controllers/offer.controller')
 const categoryController = require('../controllers/category.controller')
@@ -11,6 +13,7 @@ const promotionController = require('../controllers/promotion.controller')
 const statisticsController = require('../controllers/statistics.controller')
 const customerController = require('../controllers/customer.controller')
 const deliveryController = require('../controllers/delivery.controller')
+const observeController = require('../controllers/observe.controller')
 const authMiddleware = require('../middleware/authMiddleware');
 
 router.post('/register', authController.register)
@@ -19,17 +22,17 @@ router.post('/login', authController.login)
 router.post('/refresh-token', authController.refreshToken)
 router.post('/check-login', authController.checkLogin)
 router.post('/user-logout', authController.logout)
+router.post('/login/google', authController.loginByGoogle)
 // router.post('/change-password', authController.changePassword)
 
 router.post('/password-change', authMiddleware, authController.changePassword);
 // router.post('/password-restart', authMiddleware, authController.restartPassword);
 
-router.post('/basket/create', authMiddleware, basketController.basketCreate)
-router.post('/basket/replace', authMiddleware, basketController.basketReplace)
-router.post('/basket/add', authMiddleware, basketController.basketAdd)
+router.post('/basket/create', basketController.basketCreate)
+router.post('/basket/add', basketController.basketAdd)
 router.delete('/basket/delete', authMiddleware, basketController.basketDelete)
-router.post('/basket/modify', authMiddleware, basketController.basketModify)
-router.post('/basket/get', authMiddleware, basketController.basketGet)
+router.post('/basket/modify', basketController.basketModify)
+router.post('/basket/get', basketController.basketGet)
 
 
 router.post('/offer/create', upload.any(), offersController.createOffer)
@@ -63,7 +66,12 @@ router.post('/customer/create', authMiddleware, customerController.createCustome
 router.post('/customer/get', authMiddleware, customerController.getCustomer)
 router.post('/customer/modify', authMiddleware, customerController.modifyCustomer)
 
-router.post('/delivery/create', deliveryController.deliveryCreate)
+router.post('/delivery/get', authMiddleware, deliveryController.deliveryGet)
+router.post('/delivery/create', authMiddleware, deliveryController.deliveryCreate)
+
+router.post('/observe/change', authMiddleware, observeController.changeObserve)
+router.post('/observe/get', authMiddleware, observeController.getObserve)
+router.post('/observe/count', authMiddleware, observeController.getObserveCount)
 
 
 // router.post('/categories', authMiddleware, (req, res) => {

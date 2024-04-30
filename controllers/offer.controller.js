@@ -1,5 +1,6 @@
 const OfferService = require('../services/OfferService');
 const ImageUploadService = require('../utils/uploadFile');
+const User = require('../models/User')
 module.exports = {
     createOffer: async (req, res) => {
         try{
@@ -27,7 +28,12 @@ module.exports = {
         try{
             const query = req.query;
             const token = req.headers.authorization;
-            const offers = await OfferService.getOffers(query, token)
+            const user = await User.findOne({
+                token: {
+                    $eq: token
+                }
+            })
+            const offers = await OfferService.getOffers(query, user)
             res.status(200).send(offers)
         }
         catch(err){
@@ -37,7 +43,13 @@ module.exports = {
     getOffer: async (req, res) => {
         try{
             const token = req.headers.authorization;
-            const offer = await OfferService.getOffer(req.params.id, token)
+            const user = await User.findOne({
+                token: {
+                    $eq: token
+                }
+            })
+            const offer = await OfferService.getOffer(req.params.id, user)
+
             if(offer === null){
                 return res.status(404).send('Offer not found')
             }

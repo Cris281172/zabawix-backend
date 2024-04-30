@@ -1,8 +1,11 @@
+require('dotenv').config();
 const bcrypt = require('bcrypt');
 const User = require('../models/User')
 const {sendHTMLEmail} =  require('../config/email')
 const getCurrentDate = require('../utils/getCurrentDate')
 const jwt = require('jsonwebtoken');
+const {OAuth2Client} = require('google-auth-library')
+const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID)
 module.exports = class Auth{
     static generateEmailToken = async () => {
         const arrayOfSymbols = 'qwertyuioplkjhgfdsazxcvbnm1234567890'.split('')
@@ -71,6 +74,45 @@ module.exports = class Auth{
             res.status(500).send({error: err})
         }
     }
+    static loginByGoogle = async (req, res) => {
+        const {email, googleID} = req.body;
+        if(!email || !googleID){
+            return res.status(400).send('All fields require');
+        }
+        let user = await User.findOne({
+            googleID: googleID,
+            email: email
+        });
+
+        if(!user){
+            user = await User.create({
+                email: email.toLowerCase(),
+                accountType: 'user',
+                points: 500,
+                googleID: googleID
+            })
+            await user.save()
+        }
+
+
+        const token = jwt.sign(
+            {
+                user_id: user._id,
+                email: user.email,
+            },
+            process.env.JWT_TOKEN,
+            {
+                expiresIn: '1h'
+            }
+        )
+        await User.updateOne({
+            _id: user._id
+        }, {
+            token: token
+        })
+        user.token = token;
+        return res.status(200).send(user);
+    }
     static register = async (req,res) => {
         try{
             const {email, password} = req.body;
@@ -98,7 +140,7 @@ module.exports = class Auth{
                 emailVerifiedAt: null,
                 emailToken: emailToken,
                 accountType: 'user',
-                points: 500
+                points: 500,
             })
 
             const locals = {

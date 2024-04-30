@@ -7,8 +7,7 @@ const userSchema = Schema({
         required: true
     },
     password: {
-        type: String,
-        required: true,
+        type: String
     },
     token: {
         type: String,
@@ -24,6 +23,12 @@ const userSchema = Schema({
     },
     points: {
         type: Number
+    },
+    googleID: {
+        type: Number
+    },
+    observedOffersID: {
+        type: String
     }
 })
 

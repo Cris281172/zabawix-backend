@@ -3,7 +3,9 @@ const OfferController = require('../controllers/offer.controller')
 const updateBasketPrice = require('../utils/updateBasketPrice')
 const User = require('../models/User')
 const getPromotion = require('../utils/getPromotion')
-const BasketHistory = require('../models/BasketHistory')
+const BasketHistory = require('../models/BasketHistory');
+const customAggregate = require('../utils/customAggregate')
+const ObjectId = require('mongoose').Types.ObjectId;
 
 module.exports = {
     basketCreate: async(userID, price, basket) => {
@@ -13,7 +15,8 @@ module.exports = {
                 price: price,
                 basket: basket
             }
-            return await new Basket(newBasket).save()
+            await new Basket(newBasket).save()
+            return await module.exports.getBasket(userID);
         }
         catch(err){
             console.log(err)
@@ -34,29 +37,19 @@ module.exports = {
             console.log(err)
         }
     },
-    basketAdd: async (userBasket, productID, quantity, token) => {
+    basketAdd: async (userBasket, productID, quantity) => {
         try{
-            const basketOffer = await OfferController.basketOffer(productID)
-            const productPrice = basketOffer.price;
-            const productTitle = basketOffer.title
-            const productIndex = userBasket.basket.findIndex(item => item.productID === productID);
-            const user = await User.findOne({
-                token: {
-                    $eq: token
-                }
-            })
+            const productIndex = userBasket.basket.findIndex(item => item.productID.toString() === productID.toString());
 
-            const promotion = await getPromotion(productID, user);
-            const promotionPrice = promotion ? promotion.promotionPrice : null;
             if (productIndex > -1) {
                 userBasket.basket[productIndex].quantity += quantity;
             } else {
-                userBasket.basket.push({ productID, quantity, productPrice, productTitle, promotionPrice });
+                userBasket.basket.push({ productID, quantity });
             }
-
-            userBasket.price = updateBasketPrice(userBasket)
             await userBasket.save();
-            return userBasket
+            userBasket.price = updateBasketPrice(await module.exports.getBasket(userBasket.userID))
+            await userBasket.save();
+            return await module.exports.getBasket(userBasket.userID);
         }
         catch(err){
             console.log(err)
@@ -82,11 +75,94 @@ module.exports = {
             else {
                 basket.basket[productIndex].quantity = quantity;
             }
-            basket.price = updateBasketPrice(basket);
             await basket.save();
-            return basket;
+            basket.price = updateBasketPrice(await module.exports.getBasket(basket.userID))
+            await basket.save();
+            return await module.exports.getBasket(basket.userID);
         }
         catch(err){
+            console.log(err)
+        }
+    },
+    getBasket: async (userID) => {
+        try{
+            const query = {
+                match: { userID: userID },
+                unwind: '$basket',
+                lookups: [
+                    {
+                        from: 'images',
+                        localField: 'basket.productID',
+                        foreignField: 'offerID',
+                        as: 'basket.imageDetails'
+                    },
+                    {
+                        from: 'offers',
+                        localField: 'basket.productID',
+                        foreignField: '_id',
+                        as: 'basket.offer'
+                    },
+                    {
+                        from: 'promotions',
+                        let: { productID: '$basket.productID', userID: new ObjectId(userID) },
+                        pipeline: [
+                            {
+                                $match: {
+                                    $expr: {
+                                        $and: [
+                                            { $eq: ['$offerID', '$$productID'] },
+                                            {
+                                                $or: [
+                                                    { $eq: ['$userID', '$$userID'] },
+                                                    { $eq: ['$userID', null] }
+                                                ]
+                                            }
+                                        ]
+                                    }
+                                }
+                            }
+                        ],
+                        as: 'basket.promotionPrice'
+                    }
+                ],
+                addFields: {
+                    "basket.imageName": { $arrayElemAt: ["$basket.imageDetails.name", 0] },
+                    "basket.productTitle": { $arrayElemAt: ["$basket.offer.title", 0] },
+                    "basket.productPrice": { $arrayElemAt: ["$basket.offer.price", 0] },
+                    "basket.promotionData": { $arrayElemAt: ["$basket.promotionPrice", 0] }
+                },
+                group: {
+                    _id: "$_id",
+                    userID: { $first: "$userID" },
+                    price: { $first: "$price" },
+                    basket: { $push: "$basket" }
+                },
+                project: {
+                    customFields: {
+                        userID: 1,
+                        "basket.productID": 1,
+                        "basket.quantity": 1,
+                        "basket.productPrice": 1,
+                        "basket.productTitle": 1,
+                        "basket.promotionData": 1,
+                        "basket.imageName": 1,
+                    }
+                }
+            };
+            const aggregateBasket = await customAggregate(Basket, query);
+            if(aggregateBasket.length === 0){
+                return{
+                    userID: userID,
+                    price: 0,
+                    basket: []
+                }
+            }
+            return {
+                ...aggregateBasket[0],
+                price: updateBasketPrice(aggregateBasket[0])
+            };
+        }
+        catch (err){
             console.log(err)
         }
     }

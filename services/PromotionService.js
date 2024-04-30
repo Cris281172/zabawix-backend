@@ -43,7 +43,7 @@ module.exports = {
             }
 
             const promotion = await Promotion.find(queryCondition).skip(page * limit).limit(limit);
-            const total = await Promotion.countDocuments();
+            const total = await Promotion.countDocuments(queryCondition);
             return {
                 promotion,
                 limit,

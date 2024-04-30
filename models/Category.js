@@ -7,8 +7,7 @@ const categorySchema = Schema({
         required: true,
     },
     parentID: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'Category',
+        type: String,
         required: true,
     }
 })

@@ -28,7 +28,6 @@ const customerSchema = Schema({
     },
     addressNumber: {
         type: String,
-        required: true,
     },
     city: {
         type: String,

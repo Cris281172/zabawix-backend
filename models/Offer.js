@@ -11,7 +11,8 @@ const offerSchema = new Schema({
         required: true
     },
     categoryID: {
-        type: String,
+        type: Schema.Types.ObjectId,
+        ref: 'Category',
         required: true
     },
     subcategoryID: {
@@ -39,5 +40,5 @@ const offerSchema = new Schema({
         required: true
     }
 })
-
+offerSchema.index({ title: 'text', desc: 'text' });
 module.exports = OfferSchema = mongoose.model('Offer', offerSchema)

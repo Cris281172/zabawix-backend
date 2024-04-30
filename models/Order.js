@@ -8,11 +8,12 @@ const orderSchema = Schema({
     },
     deliveryID: {
         type: String,
-        required: true
     },
     customerID: {
         type: String,
-        required: true
+    },
+    shippingMethod: {
+        type: String
     }
 })
 

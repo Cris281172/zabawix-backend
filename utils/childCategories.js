@@ -3,7 +3,6 @@ const Category = require('../models/Category');
 const customAggregate = require('./customAggregate');
 const ObjectId = require('mongoose').Types.ObjectId;
 const childCategories = async (parentId) => {
-    console.log(parentId)
     const parentObjectId = new ObjectId(parentId);
     let result = [parentId];
 

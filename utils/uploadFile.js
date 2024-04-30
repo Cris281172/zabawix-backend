@@ -1,19 +1,17 @@
 const { Storage } = require('@google-cloud/storage');
 const storage = new Storage({
-    keyFilename: 'white-proxy-409418-22b00de7111e.json'
+    keyFilename: 'zabawix-225f1fcab3ac.json'
 });
-const bucketName = 'zabawix-image';
+const bucketName = 'zabawix-storage';
 const Image = require('../models/Image')
 
 module.exports = class ImageUploadService {
     static async uploadImage(file) {
-        // Generowanie nowej nazwy pliku
         const filenameArray = file.originalname.split('.');
         const ext = filenameArray.pop();
         const filename = new Date().getTime() + '_' + filenameArray.join('.') + '.' + ext;
         const destination = `uploads/${filename}`;
 
-        // Przesyłanie pliku do Google Cloud Storage
         const bucket = storage.bucket(bucketName);
         const blob = bucket.file(destination);
         const blobStream = blob.createWriteStream({

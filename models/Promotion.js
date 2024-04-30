@@ -7,7 +7,8 @@ const promotionSchema = Schema({
         required: true
     },
     userID: {
-        type: String
+        type: Schema.Types.ObjectId,
+        ref: "User"
     },
     startAt: {
         type: Date,
