@@ -7,9 +7,9 @@ const app = express()
 const mainRoutes = require('./routes/main');
 const bodyParser = require('body-parser');
 const https = require("https");
-const cors = require('cors')({origin: true})
+const cors = require('cors')
+app.use(cors())
 require('dotenv').config()
-app.use(cors);
 app.use(bodyParser.json())
 app.use('/', mainRoutes)
 

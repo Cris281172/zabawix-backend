@@ -1,0 +1,13 @@
+{
+  "type": "service_account",
+  "project_id": "zabawix",
+  "private_key_id": "225f1fcab3acee8ae30ef2ea2309c7d76f262976",
+  "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQDUFcyGkwKniGnR\ni6Z7i9oUg7owMLvRwBa90ZiEGlucYD/KHZ/BgC08E4xdbZgWGqetXnHYMyC8Ydea\n1HkRomdaPHz/fiqtq9WBxaP2sx7yS10r5JYdhmbHhzB8w2OL1JEl0LoYPeOTciLY\n9swcusfBDbhJI3iaIf8txQomoGIirGrHuT8iCt/ynGEYIXXlzJnPq5aE13cSGwF0\nBUQaLL2k/lqTn5hUWcS2kG1dgS97FjILmGqhpgabyhbdCoiT0xacw0tBX7Ie5hnx\nNk3pukVosM+mTdCDLlkVRkaCxv3s1kDR+pgGKtapZQNmy8B8YGKsFzPu1Ye4Qgbx\nCZCREaCXAgMBAAECggEACBQ2gM/b04byRP21X1JyAcMM1iYdGX3gP+XakfmxELFn\n7KqZOdVIo9e4ypxQpVLpnUSSQKKd9h8iB+9dF0tg9YKFXnQvawM3NGTTfKPRI3i0\neWYRQ9mpU6N2OOJ2ic6UouSjGiZNY4H/CtXH67Y/wr5jjUGxJ+nwnw04+ES2yExI\nWhMGxmb9axGF+cMpnAvEyHPJj07Y/52UYeQEUZhcJjFQeS/byIoPoiMgB3WWoCs4\nnoJkQ1332j1OneOqfFY4Qro+nZoKscINyoRBaAQvl2/9Y1gYUf+up7jkRodQbcl5\nQTbzD7RH/8BOhJ2PcyXnTdFo2t4/YebhsGdUAfmIuQKBgQDr6J97Tc7Tfe+pv5Mv\nFuxI6HLbVwDmjKNzvTj2CZNb7jReKjrsQE/vJg5Nl9PTJdwjQu4jqucAXeYWGA9j\nDbswtvL+WAXNgEYlK2D2Har9iYjTwTIqjSE8UDAlImIMsUwiY42immYIeVP7LtZV\ntdmQDW+2iqn5QnMl0y8y3mJYyQKBgQDmJcQAsim2NeyLh9BuKdhIrVQb60v/K2z9\n5lZbvi/j/X8ctnjTNYjrVaxNwRoZcrlI5wRVcn4Xf8ItqdRLnlLm4JVaneoJ90yv\njHSZ28ppZAtXRz5x6SFmdQvgUiGtmD+4H/V3lZJIKPWtOBq8ezkzwc4HSK2OV6Ic\nGec+i4I+XwKBgFBDs49mZ8p5fMOKlO9eo0IjJIEQVxQaIbrNVMYRd/u9TkADqkyb\njRbXIeKwl7etl/q/WPr1uObdC93Ujder4lauyHpVRJQo4rTez3ytl3HwC4fQodrs\nbbRxrA/WZPngkQDaUmRSmAimDzbVNsOuvblPeQTopPBT9Y2XDuYF1/xRAoGAZwNE\nZeNZFDuyswmJW6XTL0SVvyFklMRFNqggw1Ovb+cJPDrYfgEaVeu1AeCK5BUbpevx\nXqWulqoSqgm4AljNVpXzg+nm1ashYfoGPs/IG8Ax61DyPF5TGt8M/80DUgYxjyKO\n5oXGQhJDVNMl9HNbOTVoGI6JUIsc/mMBxFcBZxUCgYEAs4XGdy9qZs/x6T+Bt36g\n0jzw37F9G/uPrfqVtNkR1CYQG0UhrSFxGLQ5fA85BGk5BztsOeZKc0FQeJQ8FQ0D\n7FRA7xnTzbMcl0ih8fTw99qsW5mpBqcuqI5yg9zW3OVI64bT+GkM2fsoURCnNNaZ\nNuFF9VHA9l3WeUWAVRjdsZU=\n-----END PRIVATE KEY-----\n",
+  "client_email": "zabawix-cloud-storage@zabawix.iam.gserviceaccount.com",
+  "client_id": "115240719940136009204",
+  "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+  "token_uri": "https://oauth2.googleapis.com/token",
+  "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+  "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/zabawix-cloud-storage%40zabawix.iam.gserviceaccount.com",
+  "universe_domain": "googleapis.com"
+}
