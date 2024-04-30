@@ -14,17 +14,17 @@ app.use(bodyParser.json())
 app.use('/', mainRoutes)
 
 
-//
-// mongoose.connect(process.env.DB_URL).then(() => {
-//     console.log('Connected to DB');
-// })
-//     .catch(err => {
-//         console.log(err)
-//     })
 
-https.createServer({}, app)
-    .listen(8443, () => {
-        console.log('Server listen on 8080 port')
+mongoose.connect(process.env.DB_URL).then(() => {
+    console.log('Connected to DB');
+})
+    .catch(err => {
+        console.log(err)
     })
+
+// https.createServer({}, app)
+//     .listen(8443, () => {
+//         console.log('Server listen on 8080 port')
+//     })
 
 app.listen(8080, () => console.log(`Server listening on ${process.env.PORT} port`))
