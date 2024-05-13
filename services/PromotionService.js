@@ -56,5 +56,17 @@ module.exports = {
         catch(err){
 
         }
+    },
+    getPromotionByOfferID: async(offerID) => {
+        try{
+            return await Promotion.findOne({
+                offerID: {
+                    $eq: offerID
+                }
+            })
+        }
+        catch(err){
+            console.log(err)
+        }
     }
 }

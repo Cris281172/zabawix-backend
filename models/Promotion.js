@@ -11,11 +11,11 @@ const promotionSchema = Schema({
         ref: "User"
     },
     startAt: {
-        type: Date,
+        type: Number,
         required: true
     },
     endAt: {
-        type: Date,
+        type: Number,
         required: true
     },
     offerID: {

@@ -16,7 +16,16 @@ const userSchema = Schema({
         type: String
     },
     emailToken: {
-        type: String,
+        type: Number,
+    },
+    emailTokenExpires: {
+        type: Date
+    },
+    forgotToken: {
+        type: Number
+    },
+    forgotTokenExpires: {
+        type: Date
     },
     accountType: {
         type: String

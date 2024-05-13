@@ -14,15 +14,20 @@ const statisticsController = require('../controllers/statistics.controller')
 const customerController = require('../controllers/customer.controller')
 const deliveryController = require('../controllers/delivery.controller')
 const observeController = require('../controllers/observe.controller')
+const variantController = require('../controllers/variant.controller')
 const authMiddleware = require('../middleware/authMiddleware');
+const adminMiddleware = require('../middleware/adminMiddleware')
 
 router.post('/register', authController.register)
-router.get('/email-verify/:token', authController.verifyEmail)
+router.post('/email-verify', authController.verifyEmail)
+router.post('/resend-code', authController.resendVerifyCode)
 router.post('/login', authController.login)
 router.post('/refresh-token', authController.refreshToken)
 router.post('/check-login', authController.checkLogin)
 router.post('/user-logout', authController.logout)
 router.post('/login/google', authController.loginByGoogle)
+router.post('/forgot', authController.forgot)
+router.post('/forgot/verify', authController.forgotVerify)
 // router.post('/change-password', authController.changePassword)
 
 router.post('/password-change', authMiddleware, authController.changePassword);
@@ -38,6 +43,7 @@ router.post('/basket/get', basketController.basketGet)
 router.post('/offer/create', upload.any(), offersController.createOffer)
 router.get('/offers/get', offersController.getOffers)
 router.get('/offer/get/:id', offersController.getOffer)
+router.post('/offer/images', offersController.getOfferImages)
 router.post('/offer/images', offersController.getOfferImages)
 
 router.post('/order/create', authMiddleware,  orderController.createOrder)
@@ -58,6 +64,8 @@ router.post('/chest/open', authMiddleware, chestController.chestOpen)
 router.post('/promotion/create', promotionController.createPromotion)
 router.get('/promotions/get', promotionController.getAllPromotion)
 router.post('/promotions/user/get', authMiddleware, promotionController.getUserPromotion)
+router.post('/promotion/get/offerID', promotionController.getPromotionByOfferID)
+// router.post('/promotion/get/promotionID', promotionController.getPromotionByID)
 
 
 router.get('/statistics/get', statisticsController.getStatisticsNumber)
@@ -73,6 +81,7 @@ router.post('/observe/change', authMiddleware, observeController.changeObserve)
 router.post('/observe/get', authMiddleware, observeController.getObserve)
 router.post('/observe/count', authMiddleware, observeController.getObserveCount)
 
+router.post('/variant/create', variantController.createVariant)
 
 // router.post('/categories', authMiddleware, (req, res) => {
 //     router.post('/create', categoryController.createCategory);

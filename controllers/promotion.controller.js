@@ -44,5 +44,21 @@ module.exports = {
         catch(err){
             res.status(500).json({error: err})
         }
+    },
+    getPromotionByOfferID: async (req, res) => {
+        try{
+            const {offerID} = req.body;
+            if(!offerID){
+                return res.status(404).send('Offer ID not found :(')
+            }
+            const promotion = await PromotionService.getPromotionByOfferID(offerID);
+            if(!promotion){
+                return res.status(404).send('Promotion not found')
+            }
+            res.status(200).send(promotion)
+        }
+        catch(err){
+            res.status(500).json({error: err})
+        }
     }
 }

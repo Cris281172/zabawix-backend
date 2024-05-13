@@ -7,7 +7,12 @@ const customAggregate = require('../utils/customAggregate')
 const ObjectId = require('mongoose').Types.ObjectId;
 const childCategories = require('../utils/childCategories')
 const Observe = require('../models/Observe')
-
+const getSimilarProducts = require('../utils/getSimilarProducts')
+const offerLookup = require('../utils/offerLookup');
+const getImageLookup = require('../utils/lookups/getImageLookup')
+const getPromotionsLookup = require('../utils/lookups/getPromotionsLookup')
+const getObservesLookup = require('../utils/lookups/getObservesLookup')
+const getCategoriesLookup = require('../utils/lookups/getCategoriesLookup')
 
 module.exports = {
     createOffer: async ({title, desc, categoryID, price, createdTime, amount}) => {
@@ -65,37 +70,17 @@ module.exports = {
             let page = parseInt(query.page) || 0;
             let limit = parseInt(query.limit) || 12;
             let offers
-            offers = await customAggregate(Offer, {
+
+            const aggregationData = {
                 sort,
                 skip: page * limit,
                 match: filters,
                 limit: limit,
-                lookups: [
-                    {from: 'images', localField: '_id', foreignField: 'offerID', as: 'images'},
-                    {
-                        from: 'promotions',
-                        let: { productID: '$_id', userID: user ? new ObjectId(user.id) : null },
-                        pipeline: [
-                            {
-                                $match: {
-                                    $expr: {
-                                        $and: [
-                                            { $eq: ['$offerID', '$$productID'] },
-                                            {
-                                                $or: [
-                                                    { $eq: ['$userID', '$$userID'] },
-                                                    { $eq: ['$userID', null] }
-                                                ]
-                                            }
-                                        ]
-                                    }
-                                }
-                            }
-                        ],
-                        as: 'promotions'
-                    },
-                    {from: 'observes', localField: '_id', foreignField: 'productID', as: 'observe'},
-                    {from: 'categories', localField: 'categoryID', foreignField: '_id', as: 'category'}
+                lookups:  [
+                    getImageLookup(),
+                    getPromotionsLookup(user),
+                    getObservesLookup(),
+                    getCategoriesLookup()
                 ],
                 project: {
                     customFields:{
@@ -123,9 +108,11 @@ module.exports = {
                             }
                         }
                     },
-                    fields: ['title', 'categoryID', 'price', 'createdTime', 'amount']
+                    fields: ['title', 'categoryID', 'price', 'createdTime', 'amount', 'similarOffers'],
                 }
-            });
+            }
+
+            offers = await customAggregate(Offer, aggregationData);
 
             let total
 
@@ -159,6 +146,7 @@ module.exports = {
                 lookups: [
                     {from: 'images', localField: '_id', foreignField: 'offerID', as: 'images'},
                     {from: 'observes', localField: '_id', foreignField: 'productID', as: 'observe'},
+                    {from: 'variants', localField: '_id', foreignField: 'offerID', as: 'variant'},
                     {
                         from: 'promotions',
                         let: { productID: '$_id', userID: user ? new ObjectId(user.id) : null },
@@ -180,11 +168,33 @@ module.exports = {
                             }
                         ],
                         as: 'promotions'
+                    },
+                    {
+                        from: 'offers',
+                        let: { productId: '$productID' },
+                        pipeline: [
+                            { $match: {
+                                    $expr: {
+                                        $and: [
+                                            { $ne: ['$_id', ObjectId(id)] },
+                                            { $eq: ['$productID', '$$productId'] }
+                                        ]
+                                    }
+                                }},
+                            { $limit: 5 },
+                            { $lookup: getImageLookup()},
+                            { $lookup: getCategoriesLookup()},
+                            { $lookup: getObservesLookup()},
+                            { $lookup: getPromotionsLookup()},
+                            { $project: { promotionData: {$ifNull: [{ $arrayElemAt: ["$promotions", 0] }, null]}, title: 1, price: 1, images: 1, imageName: {$ifNull: [{ $arrayElemAt: ["$images.name", 0] }, null]} }}
+                        ],
+                        as: 'similarOffers'
                     }
                 ],
                 project: {
                     customFields:{
                         promotionData: {$ifNull: [{ $arrayElemAt: ["$promotions", 0] }, {}]},
+                        variantData: {$ifNull: [{ $arrayElemAt: ["$variant", 0] }, {}]},
                         imageNames: {$map: {input: "$images", as: "img", in: "$$img.name"}},
                         observed: {
                             $cond: {
@@ -207,7 +217,7 @@ module.exports = {
                             }
                         }
                     },
-                    fields: ['title', 'desc', 'categoryID', 'price', 'createdTime', 'amount']
+                    fields: ['title', 'desc', 'categoryID', 'price', 'createdTime', 'amount', 'similarOffers']
                 }
             });
 

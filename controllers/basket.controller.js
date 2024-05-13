@@ -11,7 +11,6 @@ module.exports = {
             // if (userBasket && basket.length !== 0) {
             //     await BasketService.basketReplace(userBasket);
             // }
-            console.log(userBasket)
             if(userBasket){
                 return res.status(409).send('Basket already exists')
             }

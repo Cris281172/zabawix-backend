@@ -8,15 +8,15 @@ const {OAuth2Client} = require('google-auth-library')
 const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID)
 module.exports = class Auth{
     static generateEmailToken = async () => {
-        const arrayOfSymbols = 'qwertyuioplkjhgfdsazxcvbnm1234567890'.split('')
+        const arrayOfSymbols = '1234567890'.split('')
 
         let randomEmailToken = [];
 
-        for(let i = 1; i<=20; i++){
+        for(let i = 1; i<=6; i++){
             randomEmailToken.push(arrayOfSymbols[Math.floor(Math.random() * arrayOfSymbols.length)])
         }
 
-        randomEmailToken = randomEmailToken.join('');
+        randomEmailToken = Number(randomEmailToken.join(''));
 
         const checkToken = await User.findOne({
             emailToken: {
@@ -26,7 +26,11 @@ module.exports = class Auth{
         if(checkToken){
             return Auth.generateEmailToken();
         }
-        return randomEmailToken;
+
+        const expires = new Date();
+        expires.setMinutes(expires.getMinutes() + 1);
+
+        return { token: randomEmailToken, expires };
 
     }
     static login = async (req, res) => {
@@ -40,22 +44,26 @@ module.exports = class Auth{
             const user = await User.findOne({
                 email: {
                     $eq: email
+                },
+                googleID: {
+                    $exists: false
                 }
             })
 
-            if(user.emailVerifiedAt === null){
-                return res.status(400).json({error: 'Account not activated'})
-            }
             if(!user){
-                return res.status(400).json({error: 'Invalid password or email'});
+                return res.status(400).send('Invalid password or email');
             }
             if(!await bcrypt.compare(password, user.password)){
-                return res.status(400).json({error: 'Invalid password or email'});
+                return res.status(400).send('Invalid password or email');
+            }
+            if(user.emailVerifiedAt === null){
+                return res.status(200).send(user)
             }
             const token = jwt.sign(
                 {
                     user_id: user._id,
                     email: user.email,
+                    accountType: user.accountType
                 },
                 process.env.JWT_TOKEN,
                 {
@@ -124,6 +132,9 @@ module.exports = class Auth{
             const checkEmailExist = await User.findOne({
                 email: {
                     $eq: email
+                },
+                googleID: {
+                    $exists: false
                 }
             })
 
@@ -132,13 +143,14 @@ module.exports = class Auth{
             }
 
             const bcryptPassword = await bcrypt.hash(password, 12)
-            const emailToken = await Auth.generateEmailToken();
+            const { token: emailToken,  expires: emailTokenExpires } = await Auth.generateEmailToken();
 
             const user = await User.create({
                 email: email.toLowerCase(),
                 password: bcryptPassword,
                 emailVerifiedAt: null,
                 emailToken: emailToken,
+                emailTokenExpires: emailTokenExpires,
                 accountType: 'user',
                 points: 500,
             })
@@ -156,8 +168,7 @@ module.exports = class Auth{
 
 
             sendHTMLEmail(options, locals, 'active-account');
-
-            return res.status(201).send(user);
+            return res.status(201).send({expires: user.emailTokenExpires, email: user.email})
 
         }
         catch(err){
@@ -167,15 +178,39 @@ module.exports = class Auth{
     }
     static verifyEmail = async (req, res) => {
         try{
-            const emailToken = req.params.token;
+            const {emailToken} = req.body;
             const userWithEmailToken = await User.findOne({
                 emailToken: {
-                    $eq: emailToken
-                }
+                    $eq: emailToken,
+                },
+                emailTokenExpires: { $gte: new Date() }
             })
+            if (!userWithEmailToken) {
+                return res.status(404).send('Invalid or expired email token');
+            }
             if(userWithEmailToken){
-                userWithEmailToken.emailVerifiedAt = getCurrentDate;
-                userWithEmailToken.save();
+                const token = jwt.sign(
+                    {
+                        user_id: userWithEmailToken._id,
+                        email: userWithEmailToken.email,
+                    },
+                    process.env.JWT_TOKEN,
+                    {
+                        expiresIn: '1h'
+                    }
+                )
+                await User.updateOne({
+                    _id: userWithEmailToken._id
+                }, {
+                    $set: {
+                        emailVerifiedAt: getCurrentDate,
+                        token: token
+                    },
+                    $unset: {
+                        emailToken: "",
+                        emailTokenExpires: ""
+                    }
+                });
 
                 const options = {
                     from: "zabawix.kontakt@gmail.com",
@@ -184,7 +219,7 @@ module.exports = class Auth{
 
 
                 await sendHTMLEmail(options, '', 'register');
-                return res.status(200).send(userWithEmailToken);
+                return res.status(200).send({...userWithEmailToken, emailVerifiedAt: getCurrentDate, token: token});
             }
             return res.status(404).send('Invalid email token')
         }
@@ -291,5 +326,81 @@ module.exports = class Auth{
         } catch (err) {
             res.status(500).send({ error: 'An error occurred during logout' });
         }
+    }
+    static resendVerifyCode = async (req, res) => {
+        try{
+            const {email} = req.body;
+            const user = await User.findOne({ email: email});
+            if(!user){
+                return res.status(404).send('User not found');
+            }
+            const { token: emailToken,  expires: emailTokenExpires } = await Auth.generateEmailToken();
+            user.emailToken = emailToken
+            user.emailTokenExpires = emailTokenExpires
+            user.save();
+            const locals = {
+                token: emailToken,
+                host: process.env.HOST,
+                port: process.env.FRONTEND_PORT
+            };
+
+            const options = {
+                from: "zabawix@gmail.com",
+                to: email,
+            }
+
+            sendHTMLEmail(options, locals, 'active-account');
+            res.status(200).send({expires: user.emailTokenExpires})
+        }
+        catch(err){
+            res.status(500).send({error: err});
+        }
+    }
+    static forgot = async (req, res) => {
+        try{
+            const {email} = req.body;
+            if(!email){
+                return res.status(400).send('Email is required')
+            }
+            const user = await User.findOne({ email: email});
+            if(!user){
+                return res.status(404).send('User not found')
+            }
+            const { token: emailToken,  expires: emailTokenExpires } = await Auth.generateEmailToken();
+            user.forgotToken = emailToken
+            user.forgotTokenExpires = emailTokenExpires;
+            user.save();
+            const locals = {
+                token: emailToken,
+                host: process.env.HOST,
+                port: process.env.FRONTEND_PORT
+            };
+            const options = {
+                from: "zabawix@gmail.com",
+                to: email,
+            }
+            sendHTMLEmail(options, locals, 'reset-password');
+            res.status(200).send({})
+        }
+        catch(err){
+            res.status(500).send({error: err})
+        }
+    }
+    static forgotVerify = async (req, res) => {
+        const {forgotToken, email} = req.body;
+        const userWithForgotToken = await User.findOne({
+            email: email,
+            forgotToken: {
+                $eq: forgotToken,
+            },
+            forgotTokenExpires: { $gte: new Date() }
+        })
+        if (!userWithForgotToken) {
+            return res.status(404).send('Invalid or expired email token');
+        }
+        return res.status(200).send(userWithForgotToken);
+    }
+    static newPassword = async (req, res) => {
+
     }
 }
