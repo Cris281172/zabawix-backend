@@ -266,6 +266,7 @@ module.exports = class Auth{
                     $eq: userToken
                 }
             })
+            console.log(userToken)
             if(!userWithToken || userWithToken.emailVerifiedAt === null){
                 return res.status(200).send({type: 'quest'})
             }
@@ -274,7 +275,7 @@ module.exports = class Auth{
                 id: userWithToken.id,
                 points: userWithToken.points
             }
-            return res.status(200).send({type: 'user', user: user})
+            return res.status(200).send({type: userWithToken.accountType, user: user})
         }
         catch(err){
             res.status(500).send({error: err})

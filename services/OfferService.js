@@ -260,5 +260,17 @@ module.exports = {
         catch(err){
             console.log(err)
         }
+    },
+    deleteOffer: async(offerID) => {
+        try{
+            return await Offer.deleteOne({
+                _id: {
+                    $eq: offerID
+                }
+            })
+        }
+        catch(err){
+            console.log(err)
+        }
     }
 }

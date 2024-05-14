@@ -1,6 +1,7 @@
 const OfferService = require('../services/OfferService');
 const ImageUploadService = require('../utils/uploadFile');
 const User = require('../models/User')
+const Offer = require('../models/Offer')
 module.exports = {
     createOffer: async (req, res) => {
         try{
@@ -72,4 +73,24 @@ module.exports = {
             res.status(500).json({error: err})
         }
     },
+    deleteOffer: async (req, res) => {
+        try{
+            const {offerID} = req.body;
+            const offerExist = await Offer.findOne({
+                _id: {
+                    $eq: offerID
+                }
+            })
+
+            if(!offerExist){
+                return res.status(404).send('Offer not found')
+            }
+
+            const deletedOffer = await OfferService.deleteOffer(offerID)
+            res.status(201).send(deletedOffer)
+        }
+        catch(err){
+            res.status(500).json({error: err})
+        }
+    }
 }

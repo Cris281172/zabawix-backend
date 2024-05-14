@@ -7,7 +7,6 @@ const adminMiddleware = async (req, res, next) => {
     }
     try{
         const decodeToken = await jwt.verify(token, process.env.JWT_TOKEN);
-        console.log(decodeToken)
         if(decodeToken.accountType === 'admin'){
             return next()
         }

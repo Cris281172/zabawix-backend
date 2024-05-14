@@ -45,6 +45,7 @@ router.get('/offers/get', offersController.getOffers)
 router.get('/offer/get/:id', offersController.getOffer)
 router.post('/offer/images', offersController.getOfferImages)
 router.post('/offer/images', offersController.getOfferImages)
+router.post('/offer/delete', adminMiddleware, offersController.deleteOffer)
 
 router.post('/order/create', authMiddleware,  orderController.createOrder)
 router.post('/orders/user/get', authMiddleware,  orderController.getAllUserOrders)
@@ -54,7 +55,7 @@ router.post('/category/create', categoryController.categoryCreate)
 router.get('/categories/get', categoryController.getCategories);
 router.post('/category/get', categoryController.getCategory)
 
-router.post('/chest/create', chestController.createChest)
+router.post('/chest/create', adminMiddleware, chestController.createChest)
 router.get('/chests/get', chestController.getChests)
 router.get('/chest/get/:id', chestController.getChest)
 router.post('/chest/add-item', chestController.chestAddItem)
@@ -81,7 +82,7 @@ router.post('/observe/change', authMiddleware, observeController.changeObserve)
 router.post('/observe/get', authMiddleware, observeController.getObserve)
 router.post('/observe/count', authMiddleware, observeController.getObserveCount)
 
-router.post('/variant/create', variantController.createVariant)
+router.post('/variant/create', adminMiddleware, variantController.createVariant)
 
 // router.post('/categories', authMiddleware, (req, res) => {
 //     router.post('/create', categoryController.createCategory);
