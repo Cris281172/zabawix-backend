@@ -36,7 +36,6 @@ module.exports = class Auth{
     static login = async (req, res) => {
         try{
             const {email, password} = req.body;
-
             if(!email || !password){
                 return res.status(400).json({error: 'All fields are required'})
             }
@@ -266,7 +265,6 @@ module.exports = class Auth{
                     $eq: userToken
                 }
             })
-            console.log(userToken)
             if(!userWithToken || userWithToken.emailVerifiedAt === null){
                 return res.status(200).send({type: 'quest'})
             }

@@ -10,10 +10,10 @@ const https = require("https");
 const cors = require('cors')
 app.use(cors())
 require('dotenv').config()
-app.use(bodyParser.json())
+app.use(bodyParser.json({
+    limit: '100mb'
+}))
 app.use('/', mainRoutes)
-
-
 
 mongoose.connect(process.env.DB_URL).then(() => {
     console.log('Connected to DB');

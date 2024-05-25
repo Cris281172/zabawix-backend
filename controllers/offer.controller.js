@@ -2,14 +2,45 @@ const OfferService = require('../services/OfferService');
 const ImageUploadService = require('../utils/uploadFile');
 const User = require('../models/User')
 const Offer = require('../models/Offer')
+const filterNullValues = require('../utils/filterNullValues')
 module.exports = {
     createOffer: async (req, res) => {
-        try{
-            const createdOffer = await OfferService.createOffer(req.body)
+        try {
+            const { title, desc, categoryID, price, createdTime, amount, relateID, ...parameterFields } = req.body;
 
-            if(req.files){
-                for(const prop in req.files){
-                    const uploadResult = await ImageUploadService.uploadImage(req.files[prop])
+            const parameter = {
+                ean: parameterFields['parameter.ean'],
+                age: parameterFields['parameter.age'],
+                sex: parameterFields['parameter.sex'],
+                weight: parameterFields['parameter.weight'],
+                brand: parameterFields['parameter.brand'],
+                packageSize: {
+                    length: parameterFields['parameter.packageSize.length'],
+                    width: parameterFields['parameter.packageSize.width'],
+                    height: parameterFields['parameter.packageSize.height']
+                },
+                productSize: {
+                    length: parameterFields['parameter.productSize.length'],
+                    width: parameterFields['parameter.productSize.width'],
+                    height: parameterFields['parameter.productSize.height']
+                }
+            };
+
+            const filteredParameter = filterNullValues(parameter);
+
+            const offerData = { title, desc, categoryID, price, createdTime, amount, parameter: filteredParameter };
+
+            const filteredOfferData = filterNullValues(offerData);
+
+            const createdOffer = await OfferService.createOffer(filteredOfferData);
+
+            if(!createdOffer){
+                res.status(500).send('Error with adding offer')
+            }
+
+            if (req.files) {
+                for (const file of req.files) {
+                    const uploadResult = await ImageUploadService.uploadImage(file);
                     await ImageUploadService.saveImage({
                         name: uploadResult.name,
                         originalName: uploadResult.originalName,
@@ -18,11 +49,10 @@ module.exports = {
                 }
             }
 
-
-            res.status(200).send(createdOffer)
+            res.status(200).send(createdOffer);
         }
-        catch(err){
-            res.status(500).json({error: err});
+        catch (err) {
+            res.status(500).json({ error: err.message });
         }
     },
     getOffers: async (req, res) => {

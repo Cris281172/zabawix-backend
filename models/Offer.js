@@ -38,6 +38,39 @@ const offerSchema = new Schema({
     amount: {
         type: Number,
         required: true
+    },
+    relateID: {
+        type: Schema.Types.ObjectId,
+    },
+    parameter: {
+        ean: {
+            type: Number,
+            required: true
+        },
+        age: {
+            type: Number,
+            required: true
+        },
+        sex: {
+            type: String,
+            required: true
+        },
+        weight: {
+        },
+        packageSize: {
+            length: { type: Number, required: true },
+            width: { type: Number, required: true },
+            height: { type: Number, required: true }
+        },
+        productSize: {
+            length: { type: Number, required: true },
+            width: { type: Number, required: true },
+            height: { type: Number, required: true }
+        },
+        brand: {
+            type: String,
+            required: true
+        }
     }
 })
 offerSchema.index({ title: 'text', desc: 'text' });

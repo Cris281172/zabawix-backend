@@ -15,17 +15,9 @@ const getObservesLookup = require('../utils/lookups/getObservesLookup')
 const getCategoriesLookup = require('../utils/lookups/getCategoriesLookup')
 
 module.exports = {
-    createOffer: async ({title, desc, categoryID, price, createdTime, amount}) => {
+    createOffer: async (data) => {
         try{
-            const newOffer = {
-                title: title,
-                desc: desc,
-                categoryID: categoryID,
-                price: price,
-                createdTime: createdTime,
-                amount: amount
-            }
-            return await new Offer(newOffer).save();
+            return await new Offer(data).save();
         }
         catch(err){
             console.log(err);
@@ -171,6 +163,38 @@ module.exports = {
                     },
                     {
                         from: 'offers',
+                        let: { relateID: '$relateID' },
+                        pipeline: [
+                            {
+                                $match: {
+                                    $expr: {
+                                        $and: [
+                                            { $ne: ['$_id', ObjectId(id)] },
+                                            { $eq: ['$relateID', '$$relateID'] }
+                                        ]
+                                    }
+                                }
+                            },
+                            { $limit: 5 },
+                            {
+                                $lookup: {
+                                    from: 'images',
+                                    localField: '_id',
+                                    foreignField: 'offerID',
+                                    as: 'images'
+                                }
+                            },
+                            {
+                                $project: {
+                                    _id: 1,
+                                    mainImage: { $arrayElemAt: ['$images.name', 0] }
+                                }
+                            }
+                        ],
+                        as: 'relatedOffers'
+                    },
+                    {
+                        from: 'offers',
                         let: { productId: '$productID' },
                         pipeline: [
                             { $match: {
@@ -186,10 +210,11 @@ module.exports = {
                             { $lookup: getCategoriesLookup()},
                             { $lookup: getObservesLookup()},
                             { $lookup: getPromotionsLookup()},
-                            { $project: { promotionData: {$ifNull: [{ $arrayElemAt: ["$promotions", 0] }, null]}, title: 1, price: 1, images: 1, imageName: {$ifNull: [{ $arrayElemAt: ["$images.name", 0] }, null]} }}
+                            { $project: { promotionData: {$ifNull: [{ $arrayElemAt: ["$promotions", 0] }, null]}, title: 1, price: 1, images: 1, imageName: {$ifNull: [{ $arrayElemAt: ["$images.name", 0] }, null]}, }}
                         ],
                         as: 'similarOffers'
                     }
+
                 ],
                 project: {
                     customFields:{
@@ -215,9 +240,9 @@ module.exports = {
                                 then: true,
                                 else: false
                             }
-                        }
+                        },
                     },
-                    fields: ['title', 'desc', 'categoryID', 'price', 'createdTime', 'amount', 'similarOffers']
+                    fields: ['title', 'desc', 'categoryID', 'price', 'createdTime', 'amount', 'similarOffers', 'relatedOffers', 'parameter']
                 }
             });
 

@@ -14,6 +14,9 @@ module.exports = {
                 res.status(409).send('Category already exists');
             }
             const createdCategory = await CategoryService.categoryCreate(req.body)
+            if(!createdCategory){
+                return res.status(500).send('Error with adding Category!')
+            }
             res.status(201).send(createdCategory)
         }
         catch(err){

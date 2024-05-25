@@ -15,6 +15,8 @@ const customerController = require('../controllers/customer.controller')
 const deliveryController = require('../controllers/delivery.controller')
 const observeController = require('../controllers/observe.controller')
 const variantController = require('../controllers/variant.controller')
+const relateController = require('../controllers/relate.controller');
+const parameterController = require('../controllers/parameter.controller')
 const authMiddleware = require('../middleware/authMiddleware');
 const adminMiddleware = require('../middleware/adminMiddleware')
 
@@ -83,6 +85,11 @@ router.post('/observe/get', authMiddleware, observeController.getObserve)
 router.post('/observe/count', authMiddleware, observeController.getObserveCount)
 
 router.post('/variant/create', adminMiddleware, variantController.createVariant)
+
+router.post('/relate/create', adminMiddleware, relateController.createRelate)
+router.get('/relates/get', adminMiddleware, relateController.getRelates)
+
+router.post('/parameter/create', adminMiddleware, parameterController.createParameter)
 
 // router.post('/categories', authMiddleware, (req, res) => {
 //     router.post('/create', categoryController.createCategory);
