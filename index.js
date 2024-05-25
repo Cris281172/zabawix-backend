@@ -1,5 +1,6 @@
 const express = require('express');
 const mongoose = require('mongoose');
+mongoose.set('strictQuery', true);
 const uploadFile = require('./utils/uploadFile')
 const saveVisit = require('./middleware/saveVisitMiddleware');
 const app = express()
