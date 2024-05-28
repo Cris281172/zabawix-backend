@@ -9,7 +9,9 @@ const mainRoutes = require('./routes/main');
 const bodyParser = require('body-parser');
 const https = require("https");
 const cors = require('cors')
-app.use(cors())
+app.use(cors({
+    origin: 'https://zabawix.com'
+}))
 require('dotenv').config()
 app.use(bodyParser.json({
     limit: '100mb'
