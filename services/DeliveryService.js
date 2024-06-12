@@ -1,24 +1,24 @@
 const Delivery = require('../models/Delivery')
 module.exports = {
-    deliveryCreate: async (deliveryData) => {
+    deliveryCreate: async ({deliveryAddress, userID}) => {
+        console.log(deliveryAddress)
         try{
             let data;
-            if(deliveryData.type === 'courier'){
+            if(deliveryAddress.type === 'courier'){
                 data = {
                     type: 'courier',
-                    courierData: {
-                        name: deliveryData.name,
-                        surname: deliveryData.surname,
-                        street: deliveryData.street,
-                        addressNumber: deliveryData.addressNumber,
-                        code: deliveryData.code,
-                        phone: deliveryData.phone,
-                        email: deliveryData.email,
-                        comments: deliveryData.comments
-                    }
+                    deliveryAddress: {
+                        name: deliveryAddress.name,
+                        surname: deliveryAddress.surname,
+                        address: deliveryAddress.address,
+                        zip: deliveryAddress.zip,
+                        phone: deliveryAddress.phone,
+                        city: deliveryAddress.city,
+                    },
+                    userID
                 }
             }
-            else if(deliveryData.type === 'parcelLocker'){
+            else if(deliveryAddress.type === 'parcelLocker'){
                 data = {
                     type: 'parcelLocker',
                     parcelLocker: {
@@ -30,7 +30,7 @@ module.exports = {
                     }
                 }
             }
-
+            console.log(data);
             return await new Delivery(data).save()
         }
         catch(err){

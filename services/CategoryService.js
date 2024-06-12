@@ -1,5 +1,4 @@
 const Category = require('../models/Category')
-const ObjectId = require('mongoose').Types.ObjectId;
 
 module.exports = {
     categoryCreate: async ({categoryName, parentID}) => {

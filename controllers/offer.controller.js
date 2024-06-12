@@ -2,11 +2,13 @@ const OfferService = require('../services/OfferService');
 const ImageUploadService = require('../utils/uploadFile');
 const User = require('../models/User')
 const Offer = require('../models/Offer')
-const filterNullValues = require('../utils/filterNullValues')
+const filterNullValues = require('../utils/filterNullValues');
+const deleteFilesFromStorage = require('../utils/cloud-storage/deleteFilesFromStorage')
+const ObjectId = require('mongoose').Types.ObjectId;
 module.exports = {
     createOffer: async (req, res) => {
         try {
-            const { title, desc, categoryID, price, createdTime, amount, relateID, ...parameterFields } = req.body;
+            const { active ,title, desc, categoryID, price, createdTime, amount, relateID, ...parameterFields } = req.body;
 
             const parameter = {
                 ean: parameterFields['parameter.ean'],
@@ -28,7 +30,7 @@ module.exports = {
 
             const filteredParameter = filterNullValues(parameter);
 
-            const offerData = { title, desc, categoryID, price, createdTime, amount, parameter: filteredParameter };
+            const offerData = {active, title, desc, categoryID, price, createdTime, amount, parameter: filteredParameter };
 
             const filteredOfferData = filterNullValues(offerData);
 
@@ -116,11 +118,77 @@ module.exports = {
                 return res.status(404).send('Offer not found')
             }
 
+            await deleteFilesFromStorage(offerExist._id)
+
             const deletedOffer = await OfferService.deleteOffer(offerID)
+
             res.status(201).send(deletedOffer)
         }
         catch(err){
             res.status(500).json({error: err})
+        }
+    },
+    updateOffer: async (req, res) => {
+        try{
+            const { active, title, desc, categoryID, price, createdTime, amount, relateID, ...parameterFields } = req.body;
+
+            const offerID = req.body.offerID
+
+            const isOfferExist = await Offer.findOne({
+                _id: {
+                    $eq: ObjectId(offerID)
+                }
+            })
+
+            if(!isOfferExist){
+                return res.status(404).send('Offer not found')
+            }
+
+            const parameter = {
+                ean: parameterFields['parameter.ean'],
+                age: parameterFields['parameter.age'],
+                sex: parameterFields['parameter.sex'],
+                weight: parameterFields['parameter.weight'],
+                brand: parameterFields['parameter.brand'],
+                packageSize: {
+                    length: parameterFields['parameter.packageSize.length'],
+                    width: parameterFields['parameter.packageSize.width'],
+                    height: parameterFields['parameter.packageSize.height']
+                },
+                productSize: {
+                    length: parameterFields['parameter.productSize.length'],
+                    width: parameterFields['parameter.productSize.width'],
+                    height: parameterFields['parameter.productSize.height']
+                }
+            };
+
+            const filteredParameter = filterNullValues(parameter);
+
+            const offerData = { active, title, desc, categoryID, price, createdTime, amount, parameter: filteredParameter };
+
+            const filteredOfferData = filterNullValues(offerData);
+
+            const updatedOffer = await OfferService.updateOffer({data: filteredOfferData, offerID: offerID});
+
+            if(!updatedOffer){
+                return res.status(500).send('Error with updating offer')
+            }
+
+            if (req.files) {
+                for (const file of req.files) {
+                    const uploadResult = await ImageUploadService.uploadImage(file);
+                    await ImageUploadService.saveImage({
+                        name: uploadResult.name,
+                        originalName: uploadResult.originalName,
+                        offerID: ObjectId(offerID)
+                    });
+                }
+            }
+
+            res.status(200).send(updatedOffer);
+        }
+        catch(err){
+            res.status(500).json({error: err});
         }
     }
 }

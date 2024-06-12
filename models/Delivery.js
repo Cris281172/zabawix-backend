@@ -6,7 +6,11 @@ const deliverySchema = Schema({
       type: String,
       required: true
     },
-    courierData: {
+    userID: {
+        type: Schema.Types.ObjectId,
+        ref: "User"
+    },
+    deliveryAddress: {
         name: {
             type: String,
             required: true
@@ -15,11 +19,7 @@ const deliverySchema = Schema({
             type: String,
             required: true
         },
-        street: {
-            type: String,
-            required: true
-        },
-        addressNumber: {
+        address: {
             type: String,
             required: true
         },
@@ -27,7 +27,7 @@ const deliverySchema = Schema({
             type: String,
             required: true
         },
-        code: {
+        zip: {
             type: Number,
             required: true
         },
@@ -35,13 +35,6 @@ const deliverySchema = Schema({
             type: Number,
             required: true
         },
-        email: {
-            type: String,
-            required: true
-        },
-        comments: {
-            type: String
-        }
     },
     parcelLocker: {
         address: {

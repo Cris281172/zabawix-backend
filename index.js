@@ -1,11 +1,13 @@
 const express = require('express');
 const mongoose = require('mongoose');
+require('./cron');
 mongoose.set('strictQuery', true);
 const uploadFile = require('./utils/uploadFile')
 const saveVisit = require('./middleware/saveVisitMiddleware');
 const app = express()
 // uploadFile('test.png', 'test.png').catch(console.error);
 const mainRoutes = require('./routes/main');
+const adminRoutes = require('./routes/admin')
 const bodyParser = require('body-parser');
 const https = require("https");
 const cors = require('cors')
@@ -25,6 +27,7 @@ app.use((req, res, next) => {
 })
 
 app.use('/', mainRoutes)
+app.use('/', adminRoutes)
 
 mongoose.connect(process.env.DB_URL).then(() => {
     console.log('Connected to DB');

@@ -27,9 +27,9 @@ module.exports = class Auth{
             return Auth.generateEmailToken();
         }
 
-        const expires = new Date();
-        expires.setMinutes(expires.getMinutes() + 1);
-
+        const timestamp = new Date();
+        timestamp.setMinutes(timestamp.getMinutes() + 1);
+        const expires = timestamp.getTime();
         return { token: randomEmailToken, expires };
 
     }
@@ -152,6 +152,7 @@ module.exports = class Auth{
                 emailTokenExpires: emailTokenExpires,
                 accountType: 'user',
                 points: 500,
+                createdAt: Date.now()
             })
 
             const locals = {

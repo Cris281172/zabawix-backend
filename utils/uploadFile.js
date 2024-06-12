@@ -1,10 +1,11 @@
+require('dotenv').config();
 const { Storage } = require('@google-cloud/storage');
 const storage = new Storage({
-    keyFilename: 'zabawix-225f1fcab3ac.json'
+    keyFilename: process.env.GOOGLE_STORAGE_KEY_NAME
 });
-const bucketName = 'zabawix-storage';
+const bucketName = process.env.GOOGLE_STORAGE_BUCKET_NAME;
 const Image = require('../models/Image')
-
+console.log(process.env.GOOGLE_STORAGE_BUCKET_NAME)
 module.exports = class ImageUploadService {
     static async uploadImage(file) {
         const filenameArray = file.originalname.split('.');

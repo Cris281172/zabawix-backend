@@ -59,6 +59,15 @@ module.exports = {
                 ];
             }
 
+            if(query.active){
+                filters.active = {};
+                filters.active.$eq = query.active !== 'false'
+            }
+            if(!query.active){
+                filters.active = {};
+                filters.active.$eq = true;
+            }
+
             let page = parseInt(query.page) || 0;
             let limit = parseInt(query.limit) || 12;
             let offers
@@ -242,7 +251,7 @@ module.exports = {
                             }
                         },
                     },
-                    fields: ['title', 'desc', 'categoryID', 'price', 'createdTime', 'amount', 'similarOffers', 'relatedOffers', 'parameter']
+                    fields: ['title', 'desc', 'categoryID', 'price', 'createdTime', 'amount', 'similarOffers', 'relatedOffers', 'parameter', 'active', 'eanID']
                 }
             });
 
@@ -288,10 +297,27 @@ module.exports = {
     },
     deleteOffer: async(offerID) => {
         try{
+            await Image.deleteMany({
+                offerID: {
+                    $eq: offerID
+                }
+            })
             return await Offer.deleteOne({
                 _id: {
                     $eq: offerID
                 }
+            })
+        }
+        catch(err){
+            console.log(err)
+        }
+    },
+    updateOffer: async({data, offerID}) => {
+        try{
+            return await Offer.updateOne({
+                _id: offerID
+            }, {
+                ...data
             })
         }
         catch(err){

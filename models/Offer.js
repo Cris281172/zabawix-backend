@@ -2,6 +2,10 @@ const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
 
 const offerSchema = new Schema({
+    active: {
+        type: Boolean,
+        required: true,
+    },
     title: {
         type: String,
         required: true
@@ -13,7 +17,6 @@ const offerSchema = new Schema({
     categoryID: {
         type: Schema.Types.ObjectId,
         ref: 'Category',
-        required: true
     },
     subcategoryID: {
         type: Number,
@@ -43,34 +46,30 @@ const offerSchema = new Schema({
         type: Schema.Types.ObjectId,
     },
     parameter: {
-        ean: {
-            type: Number,
-            required: true
-        },
         age: {
             type: Number,
-            required: true
         },
         sex: {
             type: String,
-            required: true
         },
         weight: {
         },
         packageSize: {
-            length: { type: Number, required: true },
-            width: { type: Number, required: true },
-            height: { type: Number, required: true }
+            length: { type: Number },
+            width: { type: Number },
+            height: { type: Number }
         },
         productSize: {
-            length: { type: Number, required: true },
-            width: { type: Number, required: true },
-            height: { type: Number, required: true }
+            length: { type: Number },
+            width: { type: Number },
+            height: { type: Number }
         },
         brand: {
             type: String,
-            required: true
         }
+    },
+    eanID: {
+        type: Number
     }
 })
 offerSchema.index({ title: 'text', desc: 'text' });

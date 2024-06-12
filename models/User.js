@@ -19,7 +19,7 @@ const userSchema = Schema({
         type: Number,
     },
     emailTokenExpires: {
-        type: Date
+        type: Number
     },
     forgotToken: {
         type: Number
@@ -38,6 +38,9 @@ const userSchema = Schema({
     },
     observedOffersID: {
         type: String
+    },
+    createdAt: {
+        type: Number
     }
 })
 
